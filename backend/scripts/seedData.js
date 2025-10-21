@@ -115,7 +115,7 @@ const seedData = async () => {
         departure_fee_details: "Tiket pesawat ke Jepang Visa & dokumen keberangkatan \nAsuransi perjalanan & kesehatan \nBiaya penempatan kerja di Jepang\nPendampingan proses keberangkatan hingga penyaluran",
         installment_plan: "6_installments",
         bridge_fund: "Tersedia (Jaminan dari perusahaan pengirim)",
-        timeline_text: "Minggu 1-6: Pelatihan Dasar Bahasa Jepang (Virtual: Penguasaan Hiragana & Katakana).\nMinggu 7-12: Pengembangan Kosakata dan Tata Bahasa Lanjutan (Virtual: Fokus N5 dan Komunikasi Dasar).\nMinggu 13-20: Bahasa Lanjutan, Evaluasi Virtual, dan Persiapan Administratif (Virtual: Fokus N4, Self-Study, dan Pre-screening dokumen penempatan).\nMinggu 21-24: Pemantapan Budaya, Kesiapan Fisik/Mental, dan Penyaluran (Luring di Asrama: Etika Kerja, Simulasi Wawancara, Ujian Akhir, dan Proses Keberangkatan).",
+        timeline_text: "Minggu 1-6: Pelatihan Dasar Bahasa Jepang (Virtual: Penguasaan Hiragana & Katakana).\nMinggu 7-12: Pengembangan Kosakata dan Tata Bahasa Lanjutan (Virtual: Fokus N5 dan Komunikasi Dasar).\nMinggu 13-20: Bahasa Lanjutan, Evaluasi Virtual, dan Persiaapan Administratif (Virtual: Fokus N4, Self-Study, dan Pre-screening dokumen penempatan).\nMinggu 21-24: Pemantapan Budaya, Kesiapan Fisik/Mental, dan Penyaluran (Luring di Asrama: Etika Kerja, Simulasi Wawancara, Ujian Akhir, dan Proses Keberangkatan).",
         requirements_text: "Minimal 18 tahun dan Maksimal 30 Tahun.\nMinimal Ijazah SMA/SMK Sederajat.\nSehat Jasmani & Rohani (Wajib dibuktikan dengan Surat Keterangan Sehat dari fasilitas kesehatan).\nTidak memiliki catatan kriminal (Wajib melampirkan Surat Keterangan Catatan Kepolisian/SKCK).\nBersedia mengikuti seluruh rangkaian pelatihan dan aturan asrama hingga selesai."
       },
       {
@@ -183,37 +183,6 @@ const seedData = async () => {
       );
     }
 
-    // Create sample registration for user 1
-    const registrationCode = `REG-${Date.now().toString().slice(-6)}-${Math.random().toString(36).substring(2, 5).toUpperCase()}`;
-
-    await connection.execute(
-      `INSERT INTO registrations (
-        user_id, program_id, registration_status, registration_code,
-        nik, gender, birth_place, birth_date, last_education, major,
-        education_institution, current_activity, marital_status,
-        parent_phone, parent_relationship, ktp_address, domicile_address
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        2, // user_id for user1
-        1, // program_id for Program Regular
-        'menunggu',
-        registrationCode,
-        '1234567890123456',
-        'L',
-        'Jakarta',
-        '2000-01-15',
-        'SMA',
-        'IPA',
-        'SMA Negeri 1 Jakarta',
-        'Pelajar/Mahasiswa',
-        'Belum Menikah',
-        '081234567890',
-        'Orang Tua',
-        'Jl. KTP Contoh No. 123, Jakarta',
-        'Jl. Domisili Contoh No. 456, Jakarta'
-      ]
-    );
-
     console.log("Database seeded successfully!");
     console.log("\n=== Login Credentials ===");
     console.log("Admin: admin@gmail.com / admin");
@@ -222,7 +191,7 @@ const seedData = async () => {
     console.log("\n=== Sample Data Created ===");
     console.log("- 3 Program Categories");
     console.log("- 3 Programs (Regular, Hybrid, Fast Track)");
-    console.log("- 1 Sample Registration for User 1");
+    console.log("- No sample registrations (clean start)");
     console.log("===========================");
 
     process.exit(0);
