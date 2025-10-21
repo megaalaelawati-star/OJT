@@ -1,22 +1,47 @@
 import express from "express";
-import db from "../config/database.js";
+import { promisePool } from "../config/database.js";
 
 const router = express.Router();
 
-// Get all programs
+const updateCurrentParticipants = async (programId = null) => {
+  try {
+    if (programId) {
+      const [result] = await promisePool.query(`
+        UPDATE programs 
+        SET current_participants = (
+          SELECT COUNT(*) 
+          FROM registrations 
+          WHERE program_id = ? AND registration_status = 'lolos'
+        )
+        WHERE id = ?
+      `, [programId, programId]);
+      return result.affectedRows;
+    } else {
+      const [result] = await promisePool.query(`
+        UPDATE programs p
+        SET p.current_participants = (
+          SELECT COUNT(*) 
+          FROM registrations r 
+          WHERE r.program_id = p.id AND r.registration_status = 'lolos'
+        )
+      `);
+      return result.affectedRows;
+    }
+  } catch (error) {
+    console.error("Error updating current_participants:", error);
+    throw error;
+  }
+};
+
 router.get("/", async (req, res) => {
   try {
-    console.log("📡 Fetching programs from database...");
-
-    const [programs] = await db.promise().query(`
+    const [programs] = await promisePool.query(`
       SELECT p.*, pc.name as category_name 
       FROM programs p 
       LEFT JOIN program_categories pc ON p.category_id = pc.id 
       WHERE p.status = 'active'
       ORDER BY p.created_at DESC
     `);
-
-    console.log(`✅ Found ${programs.length} programs`);
 
     res.json({
       success: true,
@@ -32,12 +57,28 @@ router.get("/", async (req, res) => {
   }
 });
 
+router.post("/sync-participants", async (req, res) => {
+  try {
+    const updatedCount = await updateCurrentParticipants();
+
+    res.json({
+      success: true,
+      message: `Berhasil menyinkronkan participant count untuk ${updatedCount} program`,
+    });
+  } catch (error) {
+    console.error("Error syncing participants:", error);
+    res.status(500).json({
+      success: false,
+      message: "Gagal menyinkronkan data participants",
+    });
+  }
+});
+
 router.get("/:id", async (req, res) => {
   try {
     const programId = req.params.id;
-    console.log(`📡 Fetching program details for ID: ${programId}`);
 
-    const [programs] = await db.promise().query(
+    const [programs] = await promisePool.query(
       `
       SELECT p.*, pc.name as category_name 
       FROM programs p 
@@ -56,41 +97,7 @@ router.get("/:id", async (req, res) => {
 
     const program = programs[0];
 
-    try {
-      if (
-        program.curriculum_json &&
-        typeof program.curriculum_json === "string"
-      ) {
-        program.curriculum_json = JSON.parse(program.curriculum_json);
-      }
-      if (
-        program.facilities_json &&
-        typeof program.facilities_json === "string"
-      ) {
-        program.facilities_json = JSON.parse(program.facilities_json);
-      }
-      if (program.timeline_json && typeof program.timeline_json === "string") {
-        program.timeline_json = JSON.parse(program.timeline_json);
-      }
-      if (
-        program.fee_details_json &&
-        typeof program.fee_details_json === "string"
-      ) {
-        program.fee_details_json = JSON.parse(program.fee_details_json);
-      }
-      if (
-        program.requirements_list &&
-        typeof program.requirements_list === "string"
-      ) {
-        program.requirements_list = JSON.parse(program.requirements_list);
-      }
-    } catch (parseError) {
-      console.warn("⚠️ Error parsing JSON fields:", parseError);
-      // Tetap lanjutkan meski ada error parsing
-    }
-
-    // Get related programs in the same category
-    const [relatedPrograms] = await db.promise().query(
+    const [relatedPrograms] = await promisePool.query(
       `
       SELECT id, name, description, duration, training_cost, departure_cost, installment_plan
       FROM programs 
@@ -116,12 +123,13 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// Update program (admin only)
 router.put("/:id", async (req, res) => {
   try {
     const {
+      category_id,
       name,
       description,
+      requirements,
       schedule,
       duration,
       capacity,
@@ -132,24 +140,40 @@ router.put("/:id", async (req, res) => {
       installment_plan,
       location,
       bridge_fund,
-      curriculum_json,
-      facilities_json,
-      timeline_json,
-      fee_details_json,
-      requirements_list,
+      timeline_text,
+      training_fee_details,
+      departure_fee_details,
+      requirements_text,
     } = req.body;
 
-    await db.promise().query(
+    if (capacity !== undefined) {
+      const [program] = await promisePool.query(
+        "SELECT current_participants FROM programs WHERE id = ?",
+        [req.params.id]
+      );
+
+      if (program.length > 0 && capacity < program[0].current_participants) {
+        return res.status(400).json({
+          success: false,
+          message: `Kapasitas tidak bisa dikurangi menjadi ${capacity} karena sudah ada ${program[0].current_participants} peserta yang terdaftar`,
+        });
+      }
+    }
+
+    await promisePool.query(
       `UPDATE programs 
-       SET name = ?, description = ?, schedule = ?, duration = ?, capacity = ?, 
-           contact_info = ?, status = ?, training_cost = ?, departure_cost = ?,
-           installment_plan = ?, location = ?, bridge_fund = ?, curriculum_json = ?, facilities_json = ?,
-           timeline_json = ?, fee_details_json = ?, requirements_list = ?,
+       SET category_id = ?, name = ?, description = ?, requirements = ?, 
+           schedule = ?, duration = ?, capacity = ?, contact_info = ?, 
+           status = ?, training_cost = ?, departure_cost = ?,
+           installment_plan = ?, location = ?, bridge_fund = ?,
+           timeline_text = ?, training_fee_details = ?, departure_fee_details = ?, requirements_text = ?,
            updated_at = CURRENT_TIMESTAMP
        WHERE id = ?`,
       [
+        category_id,
         name,
         description,
+        requirements,
         schedule,
         duration,
         capacity,
@@ -160,11 +184,10 @@ router.put("/:id", async (req, res) => {
         installment_plan,
         location,
         bridge_fund,
-        curriculum_json ? JSON.stringify(curriculum_json) : null,
-        facilities_json ? JSON.stringify(facilities_json) : null,
-        timeline_json ? JSON.stringify(timeline_json) : null,
-        fee_details_json ? JSON.stringify(fee_details_json) : null,
-        requirements_list ? JSON.stringify(requirements_list) : null,
+        timeline_text,
+        training_fee_details,
+        departure_fee_details,
+        requirements_text,
         req.params.id,
       ]
     );
@@ -182,7 +205,6 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-// POST /api/programs - Create new program
 router.post("/", async (req, res) => {
   try {
     const {
@@ -200,19 +222,19 @@ router.post("/", async (req, res) => {
       departure_cost,
       installment_plan,
       bridge_fund,
-      curriculum_json,
-      facilities_json,
-      timeline_json,
-      fee_details_json,
-      requirements_list,
+      timeline_text,
+      training_fee_details,
+      departure_fee_details,
+      requirements_text,
     } = req.body;
 
-    const [result] = await db.promise().query(
+    const [result] = await promisePool.query(
       `INSERT INTO programs 
        (category_id, name, description, requirements, schedule, duration, capacity, 
         contact_info, status, location, training_cost, departure_cost, installment_plan, 
-        bridge_fund, curriculum_json, facilities_json, timeline_json, fee_details_json, requirements_list) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        bridge_fund, timeline_text, training_fee_details, departure_fee_details, requirements_text,
+        current_participants) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)`,
       [
         category_id,
         name,
@@ -228,11 +250,10 @@ router.post("/", async (req, res) => {
         departure_cost,
         installment_plan,
         bridge_fund,
-        curriculum_json,
-        facilities_json,
-        timeline_json,
-        fee_details_json,
-        requirements_list,
+        timeline_text,
+        training_fee_details,
+        departure_fee_details,
+        requirements_text,
       ]
     );
 
@@ -252,15 +273,14 @@ router.post("/", async (req, res) => {
   }
 });
 
-// DELETE /api/programs/:id - Delete program
 router.delete("/:id", async (req, res) => {
   try {
     const programId = req.params.id;
 
-    // Check if program exists
-    const [programs] = await db
-      .promise()
-      .query("SELECT id FROM programs WHERE id = ?", [programId]);
+    const [programs] = await promisePool.query(
+      "SELECT id, current_participants FROM programs WHERE id = ?",
+      [programId]
+    );
 
     if (programs.length === 0) {
       return res.status(404).json({
@@ -269,8 +289,16 @@ router.delete("/:id", async (req, res) => {
       });
     }
 
-    // Delete program
-    await db.promise().query("DELETE FROM programs WHERE id = ?", [programId]);
+    const program = programs[0];
+
+    if (program.current_participants > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `Tidak dapat menghapus program karena masih ada ${program.current_participants} peserta yang terdaftar`,
+      });
+    }
+
+    await promisePool.query("DELETE FROM programs WHERE id = ?", [programId]);
 
     res.json({
       success: true,

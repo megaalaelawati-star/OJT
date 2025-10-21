@@ -3,7 +3,6 @@ import db from "../config/database.js";
 
 const router = express.Router();
 
-// Get all placement data with filters
 router.get("/", async (req, res) => {
   try {
     const { program, status, search } = req.query;
@@ -60,12 +59,10 @@ router.get("/", async (req, res) => {
   }
 });
 
-// Update placement status
 router.put("/:registrationId", async (req, res) => {
   try {
     const { status, company_name, placement_date, notes } = req.body;
 
-    // Check if placement record exists
     const [existing] = await db
       .promise()
       .query("SELECT * FROM placement_status WHERE registration_id = ?", [
@@ -99,7 +96,6 @@ router.put("/:registrationId", async (req, res) => {
   }
 });
 
-// Get placement statistics - DIUBAH: hapus count untuk 'gagal'
 router.get("/statistics", async (req, res) => {
   try {
     const [stats] = await db.promise().query(`
@@ -111,7 +107,6 @@ router.get("/statistics", async (req, res) => {
       FROM placement_status
     `);
 
-    // Get recent placements
     const [recentPlacements] = await db.promise().query(`
       SELECT 
         ps.*,
@@ -142,7 +137,6 @@ router.get("/statistics", async (req, res) => {
   }
 });
 
-// Bulk update placement status
 router.post("/bulk-update", async (req, res) => {
   try {
     const { registration_ids, status, notes } = req.body;

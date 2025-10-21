@@ -12,15 +12,40 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    const userData = localStorage.getItem("user");
-
-    if (token && userData) {
-      setUser(JSON.parse(userData));
-      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-    }
-    setLoading(false);
+    checkAuthStatus();
   }, []);
+
+  const checkAuthStatus = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const userData = localStorage.getItem("user");
+
+      if (token && userData) {
+        // Verify token with backend
+        const response = await axios.get("/api/auth/check", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (response.data.success) {
+          setUser(JSON.parse(userData));
+          axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+        } else {
+          // Token invalid, clear storage
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          delete axios.defaults.headers.common["Authorization"];
+        }
+      }
+    } catch (error) {
+      console.error("Auth check error:", error);
+      // Clear invalid auth data
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      delete axios.defaults.headers.common["Authorization"];
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const login = async (email, password, isAdmin = false) => {
     try {
@@ -71,12 +96,17 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    delete axios.defaults.headers.common["Authorization"];
-    setUser(null);
-    // Redirect akan ditangani di komponen Navbar
+  const logout = async () => {
+    try {
+      await axios.post("/api/auth/logout");
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      delete axios.defaults.headers.common["Authorization"];
+      setUser(null);
+    }
   };
 
   const value = {
@@ -87,11 +117,12 @@ export const AuthProvider = ({ children }) => {
     loading,
     isAuthenticated: !!user,
     isAdmin: user?.user_type === "admin" || user?.role === "admin",
+    isParticipant: user?.user_type === "participant",
   };
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 };

@@ -5,12 +5,32 @@ import db from "../config/database.js";
 
 const router = express.Router();
 
-// User registration
-router.post("/register", async (req, res) => {
+// Middleware untuk cek apakah sudah login
+const checkAlreadyLoggedIn = (req, res, next) => {
+  const token = req.headers.authorization?.split(' ')[1];
+
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      // Jika sudah login, tolak akses ke endpoint public
+      return res.status(403).json({
+        success: false,
+        message: "Anda sudah login, tidak dapat mengakses halaman ini"
+      });
+    } catch (error) {
+      // Token invalid, lanjutkan
+      next();
+    }
+  } else {
+    next();
+  }
+};
+
+// Register - hanya untuk participant
+router.post("/register", checkAlreadyLoggedIn, async (req, res) => {
   try {
     const { email, password, full_name, phone, address } = req.body;
 
-    // Validation
     if (!email || !password || !full_name) {
       return res.status(400).json({
         success: false,
@@ -18,7 +38,13 @@ router.post("/register", async (req, res) => {
       });
     }
 
-    // Check if user exists
+    if (password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: "Password must be at least 6 characters",
+      });
+    }
+
     const [existingUsers] = await db
       .promise()
       .query("SELECT id FROM users WHERE email = ?", [email]);
@@ -30,18 +56,15 @@ router.post("/register", async (req, res) => {
       });
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    // Insert user
     const [result] = await db
       .promise()
       .query(
-        "INSERT INTO users (email, password, full_name, phone, address) VALUES (?, ?, ?, ?, ?)",
+        "INSERT INTO users (email, password, full_name, phone, address, user_type) VALUES (?, ?, ?, ?, ?, 'participant')",
         [email, hashedPassword, full_name, phone, address]
       );
 
-    // Generate token
     const token = jwt.sign(
       { userId: result.insertId, email, userType: "participant" },
       process.env.JWT_SECRET,
@@ -72,8 +95,8 @@ router.post("/register", async (req, res) => {
   }
 });
 
-// User login
-router.post("/login", async (req, res) => {
+// Login participant
+router.post("/login", checkAlreadyLoggedIn, async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -138,8 +161,8 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// Admin login
-router.post("/admin/login", async (req, res) => {
+// Login admin
+router.post("/admin/login", checkAlreadyLoggedIn, async (req, res) => {
   try {
     const { username, password } = req.body;
 
@@ -198,6 +221,41 @@ router.post("/admin/login", async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Internal server error during admin login",
+    });
+  }
+});
+
+// Logout endpoint
+router.post("/logout", (req, res) => {
+  res.json({
+    success: true,
+    message: "Logout successful"
+  });
+});
+
+// Check auth status
+router.get("/check", (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+
+  if (!token) {
+    return res.json({
+      success: false,
+      message: "No token provided"
+    });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    res.json({
+      success: true,
+      data: {
+        user: decoded
+      }
+    });
+  } catch (error) {
+    res.json({
+      success: false,
+      message: "Invalid token"
     });
   }
 });

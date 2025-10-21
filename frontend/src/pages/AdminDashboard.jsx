@@ -17,6 +17,11 @@ const AdminDashboard = () => {
   });
   const [selectedRegistration, setSelectedRegistration] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [statusForm, setStatusForm] = useState({
+    registration_status: "",
+    notes: "",
+  });
   const [stats, setStats] = useState({
     totalRegistrations: 0,
     newRegistrations: 0,
@@ -33,6 +38,11 @@ const AdminDashboard = () => {
       paid: 0,
       overdue: 0,
     },
+    registrationStats: {
+      menunggu: 0,
+      lolos: 0,
+      tidak_lolos: 0,
+    },
     selectionStats: {
       menunggu: 0,
       lolos: 0,
@@ -46,14 +56,12 @@ const AdminDashboard = () => {
   });
   const { user } = useAuth();
 
-  // Fetch initial data
   useEffect(() => {
     fetchPrograms();
     fetchStatistics();
     fetchRegistrations();
   }, []);
 
-  // Debounced filter effect
   useEffect(() => {
     const timer = setTimeout(() => {
       if (!loading) {
@@ -79,7 +87,6 @@ const AdminDashboard = () => {
       const response = await axios.get(`/api/registrations?${params}`);
       if (response.data.success) {
         setRegistrations(response.data.data);
-        // Update statistics based on filtered data
         updateStatisticsFromRegistrations(response.data.data);
       } else {
         setError("Gagal mengambil data pendaftaran");
@@ -107,37 +114,33 @@ const AdminDashboard = () => {
 
   const fetchStatistics = async () => {
     try {
-      const response = await axios.get("/api/registrations/statistics/summary");
+      const response = await axios.get("/api/admin/statistics");
       if (response.data.success) {
-        // Update stats dengan data dari API
         setStats((prevStats) => ({
           ...prevStats,
-          ...response.data.data.statistics,
+          ...response.data.data,
         }));
       }
     } catch (error) {
       console.error("Error fetching statistics:", error);
+      updateStatisticsFromRegistrations(registrations);
     }
   };
 
-  // Update statistics from current registrations data
   const updateStatisticsFromRegistrations = (registrationsData) => {
     const totalRegistrations = registrationsData.length;
 
-    // Hitung pendaftar baru (dalam 7 hari terakhir)
     const oneWeekAgo = new Date();
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
     const newRegistrations = registrationsData.filter(
       (reg) => new Date(reg.registration_date) > oneWeekAgo
     ).length;
 
-    // Hitung total pemasukan
     const totalRevenue = registrationsData.reduce(
-      (sum, reg) => sum + (reg.amount_paid || 0),
+      (sum, reg) => sum + parseFloat(reg.amount_paid || 0),
       0
     );
 
-    // Hitung statistik pembayaran
     const paymentStats = {
       pending: 0,
       installment_1: 0,
@@ -150,14 +153,18 @@ const AdminDashboard = () => {
       overdue: 0,
     };
 
-    // Hitung statistik seleksi
+    const registrationStats = {
+      menunggu: 0,
+      lolos: 0,
+      tidak_lolos: 0,
+    };
+
     const selectionStats = {
       menunggu: 0,
       lolos: 0,
       tidak_lolos: 0,
     };
 
-    // Hitung statistik penyaluran
     const placementStats = {
       proses: 0,
       lolos: 0,
@@ -165,33 +172,29 @@ const AdminDashboard = () => {
     };
 
     registrationsData.forEach((reg) => {
-      // Payment stats
-      if (
-        reg.payment_status &&
-        paymentStats.hasOwnProperty(reg.payment_status)
-      ) {
+      if (reg.payment_status && paymentStats.hasOwnProperty(reg.payment_status)) {
         paymentStats[reg.payment_status]++;
+      } else if (!reg.payment_status) {
+        paymentStats.pending++;
       }
 
-      // Selection stats
-      if (
-        reg.selection_status &&
-        selectionStats.hasOwnProperty(reg.selection_status)
-      ) {
+      if (reg.registration_status && registrationStats.hasOwnProperty(reg.registration_status)) {
+        registrationStats[reg.registration_status]++;
+      }
+
+      if (reg.selection_status && selectionStats.hasOwnProperty(reg.selection_status)) {
         selectionStats[reg.selection_status]++;
       }
 
-      // Placement stats
-      if (
-        reg.placement_status &&
-        placementStats.hasOwnProperty(reg.placement_status)
-      ) {
+      if (reg.placement_status && placementStats.hasOwnProperty(reg.placement_status)) {
         placementStats[reg.placement_status]++;
       }
     });
 
-    // Hitung verifikasi tertunda (seleksi menunggu + pembayaran pending)
-    const pendingVerifications = selectionStats.menunggu + paymentStats.pending;
+    const pendingVerifications =
+      registrationStats.menunggu +
+      selectionStats.menunggu +
+      paymentStats.pending;
 
     setStats((prevStats) => ({
       ...prevStats,
@@ -200,6 +203,7 @@ const AdminDashboard = () => {
       totalRevenue,
       pendingVerifications,
       paymentStats,
+      registrationStats,
       selectionStats,
       placementStats,
     }));
@@ -224,43 +228,112 @@ const AdminDashboard = () => {
     setShowDetailModal(true);
   };
 
-  const handleCloseModal = () => {
-    setShowDetailModal(false);
-    setSelectedRegistration(null);
+  const handleUpdateRegistrationStatus = (registration) => {
+    setSelectedRegistration(registration);
+    setStatusForm({
+      registration_status: registration.registration_status || "menunggu",
+      notes: "",
+    });
+    setShowStatusModal(true);
   };
 
-  // Helper function untuk mendapatkan teks cicilan
+  const handleStatusSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedRegistration) return;
+
+    try {
+      setLoading(true);
+      const response = await axios.put(
+        `/api/registrations/${selectedRegistration.id}/registration-status`,
+        {
+          status: statusForm.registration_status,
+          notes: statusForm.notes,
+          evaluated_by: user?.id,
+        }
+      );
+
+      if (response.data.success) {
+        alert("Status pendaftaran berhasil diperbarui");
+
+        const updatedRegistration = response.data.data.updated_registration;
+
+        setRegistrations((prev) =>
+          prev.map((reg) =>
+            reg.id === selectedRegistration.id
+              ? { ...reg, registration_status: statusForm.registration_status }
+              : reg
+          )
+        );
+
+        setSelectedRegistration((prev) =>
+          prev
+            ? { ...prev, registration_status: statusForm.registration_status }
+            : prev
+        );
+
+        fetchStatistics();
+
+        setShowStatusModal(false);
+        setStatusForm({ registration_status: "", notes: "" });
+      } else {
+        throw new Error("Gagal memperbarui status");
+      }
+    } catch (error) {
+      console.error("Error updating registration status:", error);
+      alert("Error: " + (error.response?.data?.message || error.message));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setShowDetailModal(false);
+    setShowStatusModal(false);
+    setSelectedRegistration(null);
+    setStatusForm({ registration_status: "", notes: "" });
+  };
+
   const getInstallmentText = (paymentStatus, installmentPlan) => {
     if (paymentStatus === "paid") return "Lunas";
     if (paymentStatus === "pending") return "Belum Bayar";
     if (paymentStatus === "overdue") return "Jatuh Tempo";
     if (paymentStatus === "cancelled") return "Dibatalkan";
 
-    // Untuk status cicilan - format: "Cicilan Tahap (1/4)"
     const installmentNumber = paymentStatus.split("_")[1];
 
     if (installmentPlan === "4_installments") {
-      return `Cicilan Tahap (${installmentNumber}/4)`;
+      return `Cicilan ${installmentNumber}/4`;
     } else if (installmentPlan === "6_installments") {
-      return `Cicilan Tahap (${installmentNumber}/6)`;
+      return `Cicilan ${installmentNumber}/6`;
     } else {
-      return `Cicilan Tahap ${installmentNumber}`;
+      return `Cicilan ${installmentNumber}`;
     }
   };
 
-  // Helper functions for status badges
   const getPaymentStatusBadge = (paymentStatus, installmentPlan) => {
     const statusText = getInstallmentText(paymentStatus, installmentPlan);
 
-    // Tentukan class badge berdasarkan status
     let badgeClass = "bg-secondary";
     if (paymentStatus === "paid") badgeClass = "bg-success";
     else if (paymentStatus === "pending") badgeClass = "bg-warning text-dark";
     else if (paymentStatus === "overdue") badgeClass = "bg-danger";
-    else if (paymentStatus.startsWith("installment_")) badgeClass = "bg-info";
+    else if (paymentStatus?.startsWith("installment_")) badgeClass = "bg-info";
     else if (paymentStatus === "cancelled") badgeClass = "bg-secondary";
 
     return <span className={`badge ${badgeClass}`}>{statusText}</span>;
+  };
+
+  const getRegistrationStatusBadge = (status) => {
+    const statusConfig = {
+      menunggu: { class: "bg-warning text-dark", text: "Menunggu Interview" },
+      lolos: { class: "bg-success", text: "Lolos Interview" },
+      tidak_lolos: { class: "bg-danger", text: "Tidak Lolos Interview" },
+    };
+    const config = statusConfig[status] || {
+      class: "bg-secondary",
+      text: status || "Belum Ditentukan",
+    };
+    return <span className={`badge ${config.class}`}>{config.text}</span>;
   };
 
   const getSelectionStatusBadge = (status) => {
@@ -271,7 +344,7 @@ const AdminDashboard = () => {
     };
     const config = statusConfig[status] || {
       class: "bg-secondary",
-      text: status,
+      text: status || "Belum Ditentukan",
     };
     return <span className={`badge ${config.class}`}>{config.text}</span>;
   };
@@ -279,31 +352,31 @@ const AdminDashboard = () => {
   const getPlacementStatusBadge = (status) => {
     const statusConfig = {
       proses: { class: "bg-warning text-dark", text: "Proses" },
-      lolos: { class: "bg-success", text: "Lolos" },
+      lolos: { class: "bg-info", text: "Lolos" },
       ditempatkan: { class: "bg-success", text: "Ditempatkan" },
     };
     const config = statusConfig[status] || {
       class: "bg-secondary",
-      text: status,
+      text: status || "Belum Ditentukan",
     };
     return <span className={`badge ${config.class}`}>{config.text}</span>;
   };
 
-  // Helper untuk menampilkan sertifikat
   const renderCertificates = (registration) => {
     const certificates = [];
 
     if (registration.n4_certificate_path) {
       const fileName = registration.n4_certificate_path.split("/").pop();
       certificates.push(
-        <div key="n4">
+        <div key="n4" className="mb-1">
           <a
-            href={`/api/uploads/${registration.n4_certificate_path}`}
+            href={`http://localhost:5000${registration.n4_certificate_path}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-decoration-none"
+            className="text-decoration-none d-flex align-items-center"
           >
-            {fileName} <i className="bi bi-download"></i>
+            <i className="bi bi-file-earmark-pdf text-danger me-1"></i>
+            {fileName}
           </a>
         </div>
       );
@@ -312,53 +385,47 @@ const AdminDashboard = () => {
     if (registration.ssw_certificate_path) {
       const fileName = registration.ssw_certificate_path.split("/").pop();
       certificates.push(
-        <div key="ssw">
+        <div key="ssw" className="mb-1">
           <a
-            href={`/api/uploads/${registration.ssw_certificate_path}`}
+            href={`http://localhost:5000${registration.ssw_certificate_path}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-decoration-none"
+            className="text-decoration-none d-flex align-items-center"
           >
-            {fileName} <i className="bi bi-download"></i>
+            <i className="bi bi-file-earmark-pdf text-danger me-1"></i>
+            {fileName}
           </a>
         </div>
       );
     }
 
     if (certificates.length === 0) {
-      return <span className="text-muted">Tidak ada sertifikat</span>;
+      return <span className="text-muted">-</span>;
     }
 
-    return certificates;
+    return <div>{certificates}</div>;
+  };
+
+  const handleResetFilters = () => {
+    setFilters({
+      program: "all",
+      payment_status: "all",
+      selection_status: "all",
+      placement_status: "all",
+      search: "",
+    });
   };
 
   if (loading && registrations.length === 0) {
     return (
       <div className="container-fluid px-2 px-md-3 mt-3 mt-md-4">
-        <div className="d-flex justify-content-center">
+        <div className="d-flex justify-content-center py-5">
           <div className="spinner-border text-primary" role="status">
             <span className="visually-hidden">Loading...</span>
           </div>
         </div>
-        <div className="text-center mt-3">
+        <div className="text-center">
           <p>Memuat dashboard admin...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error && registrations.length === 0) {
-    return (
-      <div className="container-fluid px-2 px-md-3 mt-3 mt-md-4">
-        <div className="alert alert-danger" role="alert">
-          <h5>Error Memuat Dashboard</h5>
-          <p className="mb-0">{error}</p>
-          <button
-            className="btn btn-sm btn-outline-danger mt-2"
-            onClick={fetchRegistrations}
-          >
-            Coba Lagi
-          </button>
         </div>
       </div>
     );
@@ -385,12 +452,12 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* Statistics Cards - DINAMIS */}
+      {/* Statistics Cards */}
       <div className="row g-2 mb-3 mb-md-4">
         <div className="col-6 col-sm-3 col-md-3 mb-2">
           <div className="card bg-primary text-white h-100">
             <div className="card-body text-center p-2 p-md-3">
-              <h4 className="card-title stats-label mb-1">Total Pendaftar</h4>
+              <h6 className="card-title stats-label mb-1">Total Pendaftar</h6>
               <div className="fs-4 fw-bold">{stats.totalRegistrations}</div>
               <small>Semua Program</small>
             </div>
@@ -399,7 +466,7 @@ const AdminDashboard = () => {
         <div className="col-6 col-sm-3 col-md-3 mb-2">
           <div className="card bg-primary text-white h-100">
             <div className="card-body text-center p-2 p-md-3">
-              <h4 className="card-title stats-label mb-1">Pendaftar Baru</h4>
+              <h6 className="card-title stats-label mb-1">Pendaftar Baru</h6>
               <div className="fs-4 fw-bold">{stats.newRegistrations}</div>
               <small>7 Hari Terakhir</small>
             </div>
@@ -408,7 +475,7 @@ const AdminDashboard = () => {
         <div className="col-6 col-sm-3 col-md-3 mb-2">
           <div className="card bg-primary text-white h-100">
             <div className="card-body text-center p-2 p-md-3">
-              <h4 className="card-title stats-label mb-1">Total Pemasukan</h4>
+              <h6 className="card-title stats-label mb-1">Total Pemasukan</h6>
               <div className="fs-4 fw-bold">
                 {helpers.formatCurrency(stats.totalRevenue)}
               </div>
@@ -419,9 +486,9 @@ const AdminDashboard = () => {
         <div className="col-6 col-sm-3 col-md-3 mb-2">
           <div className="card bg-primary text-white h-100">
             <div className="card-body text-center p-2 p-md-3">
-              <h4 className="card-title stats-label mb-1">
+              <h6 className="card-title stats-label mb-1">
                 Verifikasi Tertunda
-              </h4>
+              </h6>
               <div className="fs-4 fw-bold">{stats.pendingVerifications}</div>
               <small>Perlu tindakan</small>
             </div>
@@ -431,8 +498,15 @@ const AdminDashboard = () => {
 
       {/* Filters Section */}
       <div className="card mb-4">
-        <div className="card-header">
+        <div className="card-header d-flex justify-content-between align-items-center">
           <h5 className="mb-0">Filter & Pencarian</h5>
+          <button
+            className="btn btn-sm btn-outline-secondary"
+            onClick={handleResetFilters}
+          >
+            <i className="bi bi-arrow-clockwise me-1"></i>
+            Reset Filter
+          </button>
         </div>
         <div className="card-body">
           <div className="row g-3">
@@ -470,7 +544,6 @@ const AdminDashboard = () => {
                 <option value="installment_6">Cicilan 6</option>
                 <option value="paid">Lunas</option>
                 <option value="overdue">Jatuh Tempo</option>
-                <option value="cancelled">Dibatalkan</option>
               </select>
             </div>
             <div className="col-md-2">
@@ -505,13 +578,24 @@ const AdminDashboard = () => {
             </div>
             <div className="col-md-4">
               <label className="form-label">Pencarian</label>
-              <input
-                type="text"
-                className="form-control"
-                placeholder="Cari nama, email, atau kode pendaftaran..."
-                value={filters.search}
-                onChange={handleSearchChange}
-              />
+              <div className="input-group">
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Cari nama, email, atau kode pendaftaran..."
+                  value={filters.search}
+                  onChange={handleSearchChange}
+                />
+                {filters.search && (
+                  <button
+                    className="btn btn-outline-secondary"
+                    type="button"
+                    onClick={() => handleFilterChange("search", "")}
+                  >
+                    <i className="bi bi-x"></i>
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -525,7 +609,7 @@ const AdminDashboard = () => {
           </h5>
           <div>
             <button
-              className="btn btn-sm btn-outline-primary me-2"
+              className="btn btn-sm btn-outline-primary"
               onClick={fetchRegistrations}
               disabled={loading}
             >
@@ -544,14 +628,23 @@ const AdminDashboard = () => {
           </div>
         </div>
         <div className="card-body">
+          {error && (
+            <div className="alert alert-warning d-flex align-items-center" role="alert">
+              <i className="bi bi-exclamation-triangle me-2"></i>
+              <div>{error}</div>
+            </div>
+          )}
+
           {registrations.length === 0 ? (
             <div className="text-center py-5">
-              <div className="display-1 text-muted mb-3">📋</div>
+              <div className="text-muted mb-3">
+                <i className="bi bi-clipboard-x" style={{ fontSize: "3rem" }}></i>
+              </div>
               <h5>Tidak ada data pendaftaran</h5>
               <p className="text-muted">
                 {filters.program !== "all" ||
-                filters.payment_status !== "all" ||
-                filters.search !== ""
+                  filters.payment_status !== "all" ||
+                  filters.search !== ""
                   ? "Coba ubah filter atau kata kunci pencarian Anda"
                   : "Belum ada pendaftaran yang tercatat"}
               </p>
@@ -566,6 +659,7 @@ const AdminDashboard = () => {
                     <th>Program</th>
                     <th>Kode</th>
                     <th>Tanggal</th>
+                    <th>Status Pendaftaran</th>
                     <th>Status Pembayaran</th>
                     <th>Status Seleksi</th>
                     <th>Status Penyaluran</th>
@@ -578,13 +672,25 @@ const AdminDashboard = () => {
                     <tr key={registration.id}>
                       <td>{index + 1}</td>
                       <td>
-                        <strong>{registration.full_name}</strong>
-                        <br />
-                        <small className="text-muted">
-                          {registration.email}
-                        </small>
-                        <br />
-                        <small>{registration.phone}</small>
+                        <div className="d-flex align-items-center">
+                          {registration.photo_path && (
+                            <img
+                              src={`http://localhost:5000${registration.photo_path}`}
+                              alt={registration.full_name}
+                              className="me-2"
+                              style={{ width: '50px', height: '75px', objectFit: 'cover' }}
+                            />
+                          )}
+                          <div>
+                            <strong>{registration.full_name}</strong>
+                            <br />
+                            <small className="text-muted">
+                              {registration.email}
+                            </small>
+                            <br />
+                            <small>{registration.phone}</small>
+                          </div>
+                        </div>
                       </td>
                       <td>
                         <strong>{registration.program_name}</strong>
@@ -594,40 +700,42 @@ const AdminDashboard = () => {
                             registration.program_training_cost
                           )}
                         </small>
-                        <br />
-                        <small className="text-muted">
-                          {registration.program_installment_plan ===
-                            "4_installments" && "4 Cicilan"}
-                          {registration.program_installment_plan ===
-                            "6_installments" && "6 Cicilan"}
-                          {registration.program_installment_plan === "none" &&
-                            "Tunai"}
-                        </small>
                       </td>
                       <td>
-                        <code>{registration.registration_code}</code>
+                        <code className="bg-light px-1 rounded">
+                          {registration.registration_code}
+                        </code>
                       </td>
                       <td>
                         {helpers.formatDate(registration.registration_date)}
+                      </td>
+                      <td>
+                        {getRegistrationStatusBadge(
+                          registration.registration_status
+                        )}
                       </td>
                       <td>
                         {getPaymentStatusBadge(
                           registration.payment_status,
                           registration.program_installment_plan
                         )}
-                      </td>
-                      <td>
-                        {getSelectionStatusBadge(registration.selection_status)}
-                        {registration.test_score && <br />}
-                        {registration.test_score && (
-                          <small>Nilai: {registration.test_score}</small>
+                        {registration.amount_paid > 0 && (
+                          <div className="mt-1">
+                            <small>
+                              Dibayar: {helpers.formatCurrency(registration.amount_paid)}
+                            </small>
+                          </div>
                         )}
                       </td>
                       <td>
+                        {getSelectionStatusBadge(registration.selection_status)}
+                      </td>
+                      <td>
                         {getPlacementStatusBadge(registration.placement_status)}
-                        {registration.company_name && <br />}
                         {registration.company_name && (
-                          <small>{registration.company_name}</small>
+                          <div className="mt-1">
+                            <small>{registration.company_name}</small>
+                          </div>
                         )}
                       </td>
                       <td>{renderCertificates(registration)}</td>
@@ -639,6 +747,15 @@ const AdminDashboard = () => {
                             title="Lihat Detail"
                           >
                             <i className="bi bi-eye"></i>
+                          </button>
+                          <button
+                            className="btn btn-outline-primary"
+                            onClick={() =>
+                              handleUpdateRegistrationStatus(registration)
+                            }
+                            title="Update Status Pendaftaran"
+                          >
+                            <i className="bi bi-pencil"></i>
                           </button>
                         </div>
                       </td>
@@ -660,7 +777,7 @@ const AdminDashboard = () => {
           onClick={handleCloseModal}
         >
           <div
-            className="modal-dialog modal-lg modal-dialog-centered"
+            className="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="modal-content">
@@ -672,103 +789,149 @@ const AdminDashboard = () => {
                   onClick={handleCloseModal}
                 ></button>
               </div>
-              <div className="modal-body my-2">
+              <div className="modal-body">
                 <div className="row">
                   <div className="col-md-6">
-                    <h4 className="fw-bold">Informasi Peserta</h4>
-                    <p>
+                    <h6 className="fw-bold text-primary">Informasi Peserta</h6>
+                    <div className="mb-3">
                       <strong>Nama:</strong> {selectedRegistration.full_name}
-                    </p>
-                    <p>
+                    </div>
+                    <div className="mb-3">
                       <strong>Email:</strong> {selectedRegistration.email}
-                    </p>
-                    <p>
+                    </div>
+                    <div className="mb-3">
                       <strong>Telepon:</strong> {selectedRegistration.phone}
-                    </p>
-                    <p>
-                      <strong>Alamat:</strong>{" "}
-                      {selectedRegistration.address || "Tidak tersedia"}
-                    </p>
+                    </div>
+                    <div className="mb-3">
+                      <strong>Alamat KTP:</strong>{" "}
+                      {selectedRegistration.ktp_address || "Tidak tersedia"}
+                    </div>
+                    <div className="mb-3">
+                      <strong>Alamat Domisili:</strong>{" "}
+                      {selectedRegistration.domicile_address || "Tidak tersedia"}
+                    </div>
                   </div>
                   <div className="col-md-6">
-                    <h4 className="fw-bold">Informasi Program</h4>
-                    <p>
+                    <h6 className="fw-bold text-primary">Informasi Program</h6>
+                    <div className="mb-3">
                       <strong>Program:</strong>{" "}
                       {selectedRegistration.program_name}
-                    </p>
-                    <p>
+                    </div>
+                    <div className="mb-3">
                       <strong>Biaya Pelatihan:</strong>{" "}
                       {helpers.formatCurrency(
                         selectedRegistration.program_training_cost
                       )}
-                    </p>
-                    <p>
+                    </div>
+                    <div className="mb-3">
                       <strong>Durasi:</strong>{" "}
                       {selectedRegistration.program_duration}
-                    </p>
-                    <p>
+                    </div>
+                    <div className="mb-3">
                       <strong>Kode Pendaftaran:</strong>{" "}
                       <code>{selectedRegistration.registration_code}</code>
-                    </p>
+                    </div>
                   </div>
                 </div>
 
+                <hr />
+
                 <div className="row mt-3">
-                  <div className="col-md-4">
+                  <div className="col-md-3 text-center">
+                    <h6>Pendaftaran (Interview)</h6>
+                    {getRegistrationStatusBadge(
+                      selectedRegistration.registration_status
+                    )}
+                  </div>
+                  <div className="col-md-3 text-center">
                     <h6>Pembayaran</h6>
                     {getPaymentStatusBadge(
                       selectedRegistration.payment_status,
                       selectedRegistration.program_installment_plan
                     )}
                     {selectedRegistration.amount_paid > 0 && (
-                      <p className="mb-0 small">
-                        Dibayar:{" "}
-                        {helpers.formatCurrency(
-                          selectedRegistration.amount_paid
-                        )}
+                      <div className="mt-2">
+                        <small className="text-muted">
+                          Dibayar: {helpers.formatCurrency(selectedRegistration.amount_paid)}
+                        </small>
                         {selectedRegistration.payment_date && (
-                          <>
-                            <br />
-                            Tanggal:{" "}
-                            {helpers.formatDate(
-                              selectedRegistration.payment_date
-                            )}
-                          </>
+                          <div>
+                            <small className="text-muted">
+                              Tanggal: {helpers.formatDate(selectedRegistration.payment_date)}
+                            </small>
+                          </div>
                         )}
-                      </p>
+                      </div>
                     )}
                   </div>
-                  <div className="col-md-4">
+                  <div className="col-md-3 text-center">
                     <h6>Seleksi Diklat</h6>
                     {getSelectionStatusBadge(
                       selectedRegistration.selection_status
                     )}
-                    {selectedRegistration.test_score && (
-                      <p className="mb-0 small">
-                        Nilai: {selectedRegistration.test_score}
-                      </p>
-                    )}
                     {selectedRegistration.selection_notes && (
-                      <p className="mb-0 small">
-                        Catatan: {selectedRegistration.selection_notes}
-                      </p>
+                      <div className="mt-2">
+                        <small className="text-muted">
+                          Catatan: {selectedRegistration.selection_notes}
+                        </small>
+                      </div>
                     )}
                   </div>
-                  <div className="col-md-4">
+                  <div className="col-md-3 text-center">
                     <h6>Penyaluran Kerja</h6>
                     {getPlacementStatusBadge(
                       selectedRegistration.placement_status
                     )}
                     {selectedRegistration.company_name && (
-                      <p className="mb-0 small">
-                        Perusahaan: {selectedRegistration.company_name}
-                      </p>
+                      <div className="mt-2">
+                        <small className="text-muted">
+                          Perusahaan: {selectedRegistration.company_name}
+                        </small>
+                      </div>
                     )}
                     {selectedRegistration.placement_notes && (
-                      <p className="mb-0 small">
-                        Catatan: {selectedRegistration.placement_notes}
-                      </p>
+                      <div className="mt-1">
+                        <small className="text-muted">
+                          Catatan: {selectedRegistration.placement_notes}
+                        </small>
+                      </div>
                     )}
+                  </div>
+                </div>
+
+                {/* Dokumen Sertifikat */}
+                <div className="row mt-4">
+                  <div className="col-12">
+                    <h6 className="fw-bold text-primary">Dokumen Sertifikat</h6>
+                    <div className="d-flex gap-3">
+                      {selectedRegistration.n4_certificate_path ? (
+                        <a
+                          href={`http://localhost:5000${selectedRegistration.n4_certificate_path}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="btn btn-outline-primary btn-sm"
+                        >
+                          <i className="bi bi-file-earmark-pdf me-1"></i>
+                          Sertifikat N4
+                        </a>
+                      ) : (
+                        <span className="text-muted">Tidak ada sertifikat N4</span>
+                      )}
+
+                      {selectedRegistration.ssw_certificate_path ? (
+                        <a
+                          href={`http://localhost:5000${selectedRegistration.ssw_certificate_path}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="btn btn-outline-primary btn-sm"
+                        >
+                          <i className="bi bi-file-earmark-pdf me-1"></i>
+                          Sertifikat SSW
+                        </a>
+                      ) : (
+                        <span className="text-muted">Tidak ada sertifikat SSW</span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -781,6 +944,105 @@ const AdminDashboard = () => {
                   Tutup
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Update Status Pendaftaran */}
+      {showStatusModal && selectedRegistration && (
+        <div
+          className="modal fade show d-block"
+          tabIndex="-1"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+          onClick={handleCloseModal}
+        >
+          <div
+            className="modal-dialog modal-md modal-dialog-centered"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Update Status Pendaftaran</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={handleCloseModal}
+                ></button>
+              </div>
+              <form onSubmit={handleStatusSubmit}>
+                <div className="modal-body">
+                  <div className="alert alert-info">
+                    <i className="bi bi-info-circle me-2"></i>
+                    Mengupdate status untuk: <strong>{selectedRegistration.full_name}</strong>
+                  </div>
+
+                  <div className="mb-3">
+                    <label className="form-label">Status Pendaftaran *</label>
+                    <select
+                      className="form-select"
+                      value={statusForm.registration_status}
+                      onChange={(e) =>
+                        setStatusForm({
+                          ...statusForm,
+                          registration_status: e.target.value,
+                        })
+                      }
+                      required
+                    >
+                      <option value="menunggu">Menunggu Interview</option>
+                      <option value="lolos">Lolos Interview</option>
+                      <option value="tidak_lolos">Tidak Lolos Interview</option>
+                    </select>
+                    <div className="form-text">
+                      Status ini menentukan hasil proses interview peserta
+                    </div>
+                  </div>
+
+                  <div className="mb-3">
+                    <label className="form-label">Catatan (Opsional)</label>
+                    <textarea
+                      className="form-control"
+                      rows="3"
+                      value={statusForm.notes}
+                      onChange={(e) =>
+                        setStatusForm({
+                          ...statusForm,
+                          notes: e.target.value,
+                        })
+                      }
+                      placeholder="Berikan catatan mengenai hasil interview..."
+                    />
+                    <div className="form-text">
+                      Catatan akan tersimpan dalam history status
+                    </div>
+                  </div>
+                </div>
+                <div className="modal-footer">
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={handleCloseModal}
+                    disabled={loading}
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn btn-primary"
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm me-2" />
+                        Menyimpan...
+                      </>
+                    ) : (
+                      "Simpan Status"
+                    )}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         </div>

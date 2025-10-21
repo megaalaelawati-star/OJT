@@ -6,6 +6,7 @@
   --success: #198754;
   --light: #f8f9fa;
   --dark: #212529;
+  --danger: red;
 }
 
 * {
@@ -191,6 +192,19 @@ body {
   transform: translateY(-2px);
 }
 
+.btn-outline-danger {
+  border: 2px solid var(--danger);
+  color: var(--danger);
+  background: transparent;
+}
+
+.btn-outline-danger:hover {
+  background-color: var(--danger);
+  border-color: var(--danger);
+  color: white;
+  transform: translateY(-2px);
+}
+
 .btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
@@ -331,7 +345,7 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.59);
   z-index: 1;
 }
 

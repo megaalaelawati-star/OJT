@@ -3,12 +3,10 @@ import db from "../config/database.js";
 
 const router = express.Router();
 
-// Get user dashboard data
 router.get("/:userId", async (req, res) => {
   try {
     const userId = req.params.userId;
 
-    // Get user basic info
     const [users] = await db
       .promise()
       .query(
@@ -25,7 +23,6 @@ router.get("/:userId", async (req, res) => {
 
     const user = users[0];
 
-    // Get user registrations with program details
     const [registrations] = await db.promise().query(
       `
       SELECT 
@@ -36,6 +33,7 @@ router.get("/:userId", async (req, res) => {
         p.departure_cost as program_departure_cost,
         p.duration as program_duration,
         p.schedule as program_schedule,
+        r.registration_status,
         ss.status as selection_status,
         ss.notes as selection_notes,
         ps.status as placement_status,
@@ -60,10 +58,12 @@ router.get("/:userId", async (req, res) => {
       [userId]
     );
 
-    // Calculate statistics berdasarkan 3 status utama
     const totalRegistrations = registrations.length;
     const pendingPayments = registrations.filter(
       (r) => r.payment_status === "pending"
+    ).length;
+    const pendingRegistration = registrations.filter(
+      (r) => r.registration_status === "menunggu"
     ).length;
     const passedSelections = registrations.filter(
       (r) => r.selection_status === "lolos"
@@ -77,6 +77,7 @@ router.get("/:userId", async (req, res) => {
         statistics: {
           totalRegistrations,
           pendingPayments,
+          pendingRegistration,
           passedSelections,
         },
       },

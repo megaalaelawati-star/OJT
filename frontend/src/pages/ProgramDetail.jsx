@@ -29,86 +29,9 @@ const ProgramDetail = () => {
     }
   };
 
-  // const formatRupiah = (value) => {
-  //   if (value === null || value === undefined || value === "") return "-";
-  //   const normalized =
-  //     typeof value === "number"
-  //       ? value
-  //       : parseFloat(String(value).replace(/,/g, ""));
-  //   if (isNaN(normalized)) return "-";
-  //   return normalized.toLocaleString("id-ID", {
-  //     minimumFractionDigits: 0,
-  //     maximumFractionDigits: 0,
-  //   });
-  // };
-
-  // Fungsi helper untuk handle data JSON - TIDAK PERLU PARSE LAGI
-  const getCurriculum = () => {
-    if (!program.curriculum_json) return [];
-    // Jika sudah object, langsung return
-    if (typeof program.curriculum_json === "object") {
-      return program.curriculum_json;
-    }
-    // Jika masih string, parse (fallback)
-    try {
-      return JSON.parse(program.curriculum_json);
-    } catch (error) {
-      console.error("Error parsing curriculum:", error);
-      return [];
-    }
-  };
-
-  const getFacilities = () => {
-    if (!program.facilities_json) return { education: [], dormitory: [] };
-    if (typeof program.facilities_json === "object") {
-      return program.facilities_json;
-    }
-    try {
-      return JSON.parse(program.facilities_json);
-    } catch (error) {
-      console.error("Error parsing facilities:", error);
-      return { education: [], dormitory: [] };
-    }
-  };
-
-  const getTimeline = () => {
-    if (!program.timeline_json) return [];
-    if (typeof program.timeline_json === "object") {
-      return program.timeline_json;
-    }
-    try {
-      return JSON.parse(program.timeline_json);
-    } catch (error) {
-      console.error("Error parsing timeline:", error);
-      return [];
-    }
-  };
-
-  const getFeeDetails = () => {
-    if (!program.fee_details_json)
-      return { training_fee_items: [], departure_fee_items: [] };
-    if (typeof program.fee_details_json === "object") {
-      return program.fee_details_json;
-    }
-    try {
-      return JSON.parse(program.fee_details_json);
-    } catch (error) {
-      console.error("Error parsing fee details:", error);
-      return { training_fee_items: [], departure_fee_items: [] };
-    }
-  };
-
-  const getRequirements = () => {
-    if (!program.requirements_list) return [];
-    if (typeof program.requirements_list === "object") {
-      return program.requirements_list;
-    }
-    try {
-      return JSON.parse(program.requirements_list);
-    } catch (error) {
-      console.error("Error parsing requirements:", error);
-      return [];
-    }
+  const formatTextToList = (text) => {
+    if (!text) return [];
+    return text.split("\n").filter((item) => item.trim() !== "");
   };
 
   if (loading) {
@@ -137,15 +60,10 @@ const ProgramDetail = () => {
     );
   }
 
-  // Debug: Cek tipe data
-  console.log("Curriculum type:", typeof program.curriculum_json);
-  console.log("Curriculum data:", program.curriculum_json);
-
-  const curriculum = getCurriculum();
-  const facilities = getFacilities();
-  const timeline = getTimeline();
-  const feeDetails = getFeeDetails();
-  const requirements = getRequirements();
+  const timelineItems = formatTextToList(program.timeline_text);
+  const trainingFeeItems = formatTextToList(program.training_fee_details);
+  const departureFeeItems = formatTextToList(program.departure_fee_details);
+  const requirementsItems = formatTextToList(program.requirements_text);
 
   return (
     <>
@@ -154,7 +72,10 @@ const ProgramDetail = () => {
         className="hero-section position-relative d-flex align-items-center"
         style={{
           minHeight: "60vh",
-          background: "rgba(0,0,0,0.45)",
+          backgroundImage: "url('images/regular_detail.jpg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
         }}
         aria-label={`Program ${program.name}`}
       >
@@ -233,111 +154,14 @@ const ProgramDetail = () => {
           </div>
         </section>
 
-        {/* Course Curriculum */}
-        {curriculum && curriculum.length > 0 && (
-          <section className="mb-5">
-            <h2 className="text-center mb-4 text-uppercase fw-bold text-primary">
-              Kurikulum Program
-            </h2>
-            <div className="row g-4">
-              {curriculum.map((phase, index) => (
-                <div key={index} className="col-lg-6">
-                  <div className="card h-100 border-0 shadow-sm">
-                    <div className="card-header bg-primary text-white text-center">
-                      <h5 className="card-title mb-0 text-uppercase fw-bold">
-                        {phase.phase}
-                      </h5>
-                    </div>
-                    <div className="card-body">
-                      <ul className="list-unstyled">
-                        {phase.weeks &&
-                          phase.weeks.map((week, weekIndex) => (
-                            <li
-                              key={weekIndex}
-                              className="mb-2 d-flex align-items-center"
-                            >
-                              <i className="bi bi-check-circle text-success me-2"></i>
-                              <span>{week}</span>
-                            </li>
-                          ))}
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Facilities */}
-        {facilities && (
-          <section className="mb-5">
-            <h2 className="text-center mb-4 text-uppercase fw-bold text-primary">
-              Fasilitas Pendidikan & Asrama
-            </h2>
-            <div className="row g-4">
-              {facilities.education && facilities.education.length > 0 && (
-                <div className="col-lg-6">
-                  <div className="card h-100 border-0 shadow-sm">
-                    <div className="card-header bg-primary text-white text-center">
-                      <h5 className="card-title mb-0 text-uppercase fw-bold">
-                        <i className="bi bi-book me-2"></i>
-                        Fasilitas Pendidikan
-                      </h5>
-                    </div>
-                    <div className="card-body">
-                      <ul className="list-unstyled">
-                        {facilities.education.map((item, index) => (
-                          <li
-                            key={index}
-                            className="mb-2 d-flex align-items-center"
-                          >
-                            <i className="bi bi-check-circle text-success me-2"></i>
-                            <span>{item}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              )}
-              {facilities.dormitory && facilities.dormitory.length > 0 && (
-                <div className="col-lg-6">
-                  <div className="card h-100 border-0 shadow-sm">
-                    <div className="card-header bg-primary text-white text-center">
-                      <h5 className="card-title mb-0 text-uppercase fw-bold">
-                        <i className="bi bi-house-door me-2"></i>
-                        Fasilitas Asrama
-                      </h5>
-                    </div>
-                    <div className="card-body">
-                      <ul className="list-unstyled">
-                        {facilities.dormitory.map((item, index) => (
-                          <li
-                            key={index}
-                            className="mb-2 d-flex align-items-center"
-                          >
-                            <i className="bi bi-check-circle text-success me-2"></i>
-                            <span>{item}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </section>
-        )}
-
         {/* Timeline */}
-        {timeline && timeline.length > 0 && (
+        {timelineItems.length > 0 && (
           <section className="mb-5">
             <h2 className="text-center mb-4 text-uppercase fw-bold text-primary">
               Timeline Program
             </h2>
             <div className="row g-4">
-              {timeline.map((item, index) => (
+              {timelineItems.map((item, index) => (
                 <div key={index} className="col-md-6 col-lg-3">
                   <div className="card h-100 border-0 shadow-sm text-center hover-shadow">
                     <div className="card-body p-4">
@@ -349,10 +173,7 @@ const ProgramDetail = () => {
                           {index + 1}
                         </div>
                       </div>
-                      <h5 className="card-title text-uppercase fw-bold text-primary">
-                        {item.month}
-                      </h5>
-                      <p className="card-text text-muted">{item.title}</p>
+                      <p className="card-text text-muted">{item}</p>
                     </div>
                   </div>
                 </div>
@@ -379,18 +200,23 @@ const ProgramDetail = () => {
                   </h4>
                 </div>
                 <div className="card-body">
-                  <ul className="list-unstyled">
-                    {feeDetails.training_fee_items &&
-                      feeDetails.training_fee_items.map((item, index) => (
+                  {trainingFeeItems.length > 0 ? (
+                    <ul className="list-unstyled">
+                      {trainingFeeItems.map((item, index) => (
                         <li
                           key={index}
-                          className="mb-2 d-flex align-items-center"
+                          className="mb-2 d-flex align-items-start"
                         >
                           <i className="bi bi-check-circle text-success me-2"></i>
                           <span>{item}</span>
                         </li>
                       ))}
-                  </ul>
+                    </ul>
+                  ) : (
+                    <p className="text-muted">
+                      Tidak ada detail biaya tambahan
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -407,24 +233,29 @@ const ProgramDetail = () => {
                   </h4>
                 </div>
                 <div className="card-body">
-                  <ul className="list-unstyled">
-                    {feeDetails.departure_fee_items &&
-                      feeDetails.departure_fee_items.map((item, index) => (
+                  {departureFeeItems.length > 0 ? (
+                    <ul className="list-unstyled">
+                      {departureFeeItems.map((item, index) => (
                         <li
                           key={index}
-                          className="mb-2 d-flex align-items-center"
+                          className="mb-2 d-flex align-items-start"
                         >
                           <i className="bi bi-check-circle text-success me-2"></i>
                           <span>{item}</span>
                         </li>
                       ))}
-                  </ul>
+                    </ul>
+                  ) : (
+                    <p className="text-muted">
+                      Tidak ada detail biaya tambahan
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
 
             {/* Persyaratan Peserta */}
-            {requirements && requirements.length > 0 && (
+            {requirementsItems.length > 0 && (
               <div className="col-12">
                 <div className="card border-0 shadow-sm">
                   <div className="card-header bg-primary text-white text-center">
@@ -434,9 +265,9 @@ const ProgramDetail = () => {
                   </div>
                   <div className="card-body">
                     <div className="row">
-                      {requirements.map((requirement, index) => (
+                      {requirementsItems.map((requirement, index) => (
                         <div key={index} className="col-md-6 mb-2">
-                          <div className="d-flex align-items-center">
+                          <div className="d-flex align-items-start">
                             <i className="bi bi-check-circle text-success me-2"></i>
                             <span>{requirement}</span>
                           </div>
@@ -447,6 +278,51 @@ const ProgramDetail = () => {
                 </div>
               </div>
             )}
+          </div>
+        </section>
+
+        {/* Informasi Tambahan */}
+        <section className="mb-5">
+          <div className="row">
+            <div className="col-12">
+              <div className="card border-0 shadow-sm">
+                <div className="card-header bg-primary text-white">
+                  <h5 className="card-title mb-0 text-uppercase fw-bold text-center">
+                    Informasi Tambahan
+                  </h5>
+                </div>
+                <div className="card-body">
+                  <div className="row">
+                    <div className="col-md-6">
+                      <h6>Rencana Cicilan</h6>
+                      <p className="text-muted">
+                        {program.installment_plan === "none"
+                          ? "Tidak tersedia cicilan"
+                          : program.installment_plan === "4_installments"
+                          ? "4 Kali Cicilan"
+                          : "6 Kali Cicilan"}
+                      </p>
+                    </div>
+                    <div className="col-md-6">
+                      <h6>Dana Talang</h6>
+                      <p className="text-muted">{program.bridge_fund}</p>
+                    </div>
+                  </div>
+
+                  {program.contact_info && (
+                    <div className="mt-3">
+                      <h6>Kontak Informasi</h6>
+                      <div
+                        style={{ whiteSpace: "pre-line" }}
+                        className="text-muted"
+                      >
+                        {program.contact_info}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         </section>
       </div>

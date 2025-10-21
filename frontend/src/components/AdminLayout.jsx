@@ -10,12 +10,10 @@ const AdminLayout = ({ children }) => {
   const [isMobile, setIsMobile] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
-  // Detect mobile screen
   useEffect(() => {
     const checkMobile = () => {
       const mobile = window.innerWidth < 768;
       setIsMobile(mobile);
-      // Auto-close sidebar when switching to mobile
       if (mobile) {
         setMobileSidebarOpen(false);
       }
@@ -46,20 +44,10 @@ const AdminLayout = ({ children }) => {
       icon: "bi-credit-card",
       label: "Manajemen Pembayaran",
     },
-    // {
-    //   path: "/admin/selection",
-    //   icon: "bi-clipboard-check",
-    //   label: "Manajemen Seleksi",
-    // },
-    // {
-    //   path: "/admin/placement",
-    //   icon: "bi-briefcase",
-    //   label: "Manajemen Penyaluran",
-    // },
     {
       path: "/admin/selection-and-placement",
       icon: "bi-clipboard-check",
-      label: "Manajemen Selection & Penyaluran",
+      label: "Manajemen Seleksi & Penyaluran",
     },
     {
       path: "/admin/financial-reports",
@@ -71,43 +59,22 @@ const AdminLayout = ({ children }) => {
       icon: "bi-journal-text",
       label: "Manajemen Program",
     },
+    {
+      path: "/admin/users",
+      icon: "bi-people",
+      label: "Manajemen User",
+    },
   ];
 
   const isActive = (menuItem) => {
     if (menuItem.exact) {
       return location.pathname === menuItem.path;
     }
-    // return (
-    //   location.pathname.startsWith(menuItem.path) && menuItem.path !== "/admin"
-    // );
     return (
       location.pathname === menuItem.path ||
       location.pathname.startsWith(menuItem.path + "/")
     );
   };
-
-  // const getPageTitle = () => {
-  //   const currentItem = menuItems.find((item) => isActive(item));
-  //   if (currentItem) return currentItem.label;
-
-  //   if (location.pathname.startsWith("/admin/payments"))
-  //     return "Manajemen Pembayaran";
-  //   if (location.pathname.startsWith("/admin/selection"))
-  //     return "Manajemen Seleksi";
-  //   if (location.pathname.startsWith("/admin/placement"))
-  //     return "Manajemen Penyaluran";
-  //   if (location.pathname.startsWith("/admin/financial-reports"))
-  //     return "Laporan Keuangan";
-
-  //   return "Admin Dashboard";
-  // };
-
-  // const getPageDescription = () => {
-  //   if (location.pathname === "/admin") {
-  //     return "Overview dan statistik sistem";
-  //   }
-  //   return "Kelola data dan proses administrasi";
-  // };
 
   const toggleMobileSidebar = () => {
     setMobileSidebarOpen(!mobileSidebarOpen);
@@ -119,7 +86,6 @@ const AdminLayout = ({ children }) => {
     }
   };
 
-  // Close mobile sidebar when route changes
   useEffect(() => {
     if (isMobile) {
       setMobileSidebarOpen(false);
@@ -131,9 +97,8 @@ const AdminLayout = ({ children }) => {
       {/* Sidebar untuk Desktop */}
       {!isMobile && (
         <div
-          className={`sidebar bg-primary text-white ${
-            sidebarCollapsed ? "collapsed" : ""
-          }`}
+          className={`sidebar bg-primary text-white ${sidebarCollapsed ? "collapsed" : ""
+            }`}
         >
           <div className="sidebar-header d-flex align-items-center justify-content-between p-3 border-bottom">
             {!sidebarCollapsed && (
@@ -150,9 +115,8 @@ const AdminLayout = ({ children }) => {
               }
             >
               <i
-                className={`bi ${
-                  sidebarCollapsed ? "bi-chevron-right" : "bi-chevron-left"
-                }`}
+                className={`bi ${sidebarCollapsed ? "bi-chevron-right" : "bi-chevron-left"
+                  }`}
               ></i>
             </button>
           </div>
@@ -162,15 +126,13 @@ const AdminLayout = ({ children }) => {
               <li key={item.path} className="menu-item">
                 <Link
                   to={item.path}
-                  className={`menu-link d-flex align-items-center text-white p-3 text-decoration-none ${
-                    isActive(item) ? "active" : ""
-                  }`}
+                  className={`menu-link d-flex align-items-center text-white p-3 text-decoration-none ${isActive(item) ? "active" : ""
+                    }`}
                   title={sidebarCollapsed ? item.label : ""}
                 >
                   <i
-                    className={`bi ${item.icon} ${
-                      sidebarCollapsed ? "fs-5 mx-auto" : "me-3"
-                    }`}
+                    className={`bi ${item.icon} ${sidebarCollapsed ? "fs-5 mx-auto" : "me-3"
+                      }`}
                     style={{ width: "20px", textAlign: "center" }}
                   ></i>
                   {!sidebarCollapsed && (
@@ -205,9 +167,8 @@ const AdminLayout = ({ children }) => {
       {/* Mobile Sidebar */}
       {isMobile && (
         <div
-          className={`mobile-sidebar bg-primary text-white ${
-            mobileSidebarOpen ? "open" : ""
-          }`}
+          className={`mobile-sidebar bg-primary text-white ${mobileSidebarOpen ? "open" : ""
+            }`}
         >
           <div className="sidebar-header d-flex align-items-center justify-content-between p-3 border-bottom">
             <div>
@@ -228,9 +189,8 @@ const AdminLayout = ({ children }) => {
               <li key={item.path} className="menu-item">
                 <Link
                   to={item.path}
-                  className={`menu-link d-flex align-items-center text-white p-3 text-decoration-none ${
-                    isActive(item) ? "active" : ""
-                  }`}
+                  className={`menu-link d-flex align-items-center text-white p-3 text-decoration-none ${isActive(item) ? "active" : ""
+                    }`}
                   onClick={handleMenuClick}
                 >
                   <i
@@ -257,9 +217,8 @@ const AdminLayout = ({ children }) => {
 
       {/* Main Content */}
       <div
-        className={`main-content ${isMobile ? "mobile" : ""} ${
-          sidebarCollapsed && !isMobile ? "expanded" : ""
-        }`}
+        className={`main-content ${isMobile ? "mobile" : ""} ${sidebarCollapsed && !isMobile ? "expanded" : ""
+          }`}
       >
         {/* Topbar */}
         <div className="topbar bg-white border-bottom shadow-sm">
@@ -297,7 +256,7 @@ const AdminLayout = ({ children }) => {
                   </button>
                   <ul className="dropdown-menu dropdown-menu-end">
                     <li>
-                      <button className="dropdown-item" onClick={handleLogout}>
+                      <button className="dropdown-item text-danger" onClick={handleLogout}>
                         <i className="bi bi-box-arrow-right me-2"></i>
                         Logout
                       </button>

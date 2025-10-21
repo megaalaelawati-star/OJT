@@ -18,16 +18,16 @@ const Footer = () => {
           </div>
 
           {/* Sosial Media */}
-          <div className="col-md-4 mb-4 mb-md-0 text-center text-md-start">
+          <div className="col-md-4 mb-4 mb-md-0 text-start">
             <h5 className="text-uppercase fw-bold mb-3">Sosial Media</h5>
             <ul className="list-unstyled small">
-              <li className="mb-2 d-flex align-items-center gap-2 justify-content-center justify-content-md-start">
+              <li className="mb-2 d-flex align-items-center gap-2 justify-content-start">
                 <i className="bi bi-instagram fs-5"></i>
                 <span>fitalenta.id</span>
               </li>
-              <li className="mb-2 d-flex align-items-center gap-2 justify-content-center justify-content-md-start">
+              <li className="mb-2 d-flex align-items-center gap-2 justify-content-start">
                 <i className="bi bi-whatsapp fs-5"></i>
-                <span>+62 852 81791931</span>
+                <span>+62 811 1011 9273</span>
               </li>
             </ul>
           </div>

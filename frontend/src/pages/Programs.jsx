@@ -29,19 +29,6 @@ const Programs = () => {
     }
   };
 
-  // const formatRupiah = (value) => {
-  //   if (value === null || value === undefined || value === "") return "-";
-  //   const normalized =
-  //     typeof value === "number"
-  //       ? value
-  //       : parseFloat(String(value).replace(/,/g, ""));
-  //   if (isNaN(normalized)) return "-";
-  //   return normalized.toLocaleString("id-ID", {
-  //     minimumFractionDigits: 0,
-  //     maximumFractionDigits: 0,
-  //   });
-  // };
-
   const categories = [...new Set(programs.map((p) => p.category_name))];
   const filteredPrograms =
     selectedCategory === "all"
@@ -144,7 +131,10 @@ const Programs = () => {
                     <div className="card-header bg-transparent">
                       <div className="d-flex justify-content-between align-items-center">
                         <h5 className="card-title mb-1">{program.name}</h5>
-                        <span className="badge bg-primary"> {program.category_name} </span>
+                        <span className="badge bg-primary">
+                          {" "}
+                          {program.category_name}{" "}
+                        </span>
                       </div>
                     </div>
 

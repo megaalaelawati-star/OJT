@@ -7,7 +7,6 @@ import { dirname } from "path";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Create connection to MySQL
 const connection = mysql.createConnection({
   host: process.env.DB_HOST || "localhost",
   user: process.env.DB_USER || "root",
@@ -15,15 +14,13 @@ const connection = mysql.createConnection({
   multipleStatements: true,
 });
 
-// Read SQL schema file
 const schemaPath = path.join(__dirname, "../../database/schema.sql"); // jka menggunakan versi mysql terbaru harap ganti nama dari ../../database/schema.sql ke ../../database/schema2.sql
 const schema = fs.readFileSync(schemaPath, "utf8");
 
-console.log("🚀 Setting up database...");
+console.log("Setting up database...");
 
 const setupDatabase = async () => {
   try {
-    // Connect to MySQL
     await new Promise((resolve, reject) => {
       connection.connect((err) => {
         if (err) reject(err);
@@ -31,12 +28,11 @@ const setupDatabase = async () => {
       });
     });
 
-    console.log("✅ Connected to MySQL server");
+    console.log("Connected to MySQL server");
 
-    // Create database
     await new Promise((resolve, reject) => {
       connection.query(
-        "CREATE DATABASE IF NOT EXISTS intern_registration_test",
+        "CREATE DATABASE IF NOT EXISTS intern_registration",
         (err) => {
           if (err) reject(err);
           else resolve();
@@ -44,19 +40,17 @@ const setupDatabase = async () => {
       );
     });
 
-    console.log("✅ Database created or already exists");
+    console.log("Database created or already exists");
 
-    // Use the database
     await new Promise((resolve, reject) => {
-      connection.query("USE intern_registration_test", (err) => {
+      connection.query("USE intern_registration", (err) => {
         if (err) reject(err);
         else resolve();
       });
     });
 
-    console.log("✅ Using database intern_registration_test");
+    console.log("Using database intern_registration");
 
-    // Execute schema
     await new Promise((resolve, reject) => {
       connection.query(schema, (err) => {
         if (err) reject(err);
@@ -64,13 +58,12 @@ const setupDatabase = async () => {
       });
     });
 
-    console.log("✅ Database schema created successfully");
+    console.log("Database schema created successfully");
 
-    // Close connection
     connection.end();
 
     console.log(
-      "🌱 Database setup completed. Run 'npm run db:seed' to seed data."
+      "Database setup completed. Run 'npm run db:seed' to seed data."
     );
     process.exit(0);
   } catch (error) {
@@ -80,7 +73,6 @@ const setupDatabase = async () => {
   }
 };
 
-// Handle uncaught errors
 process.on("unhandledRejection", (err) => {
   console.error("❌ Unhandled Promise Rejection:", err);
   connection.end();

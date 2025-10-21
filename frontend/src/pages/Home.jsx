@@ -6,17 +6,49 @@ const Home = () => {
   const [featuredPrograms, setFeaturedPrograms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [currentStory, setCurrentStory] = useState(0);
+
+  // Data testimoni
+  const successStories = [
+    {
+      id: 1,
+      name: "Andi Salman AL-Farisi",
+      position: "Kaigo",
+      content: "Bergabung dengan FITALENTA adalah keputusan terbaik dalam hidup saya. Saya mendapatkan pelatihan bahasa Jepang yang intensif, pemahaman budaya kerja, serta bimbingan disiplin yang benar-benar mempersiapkan saya menghadapi dunia kerja di Jepang. Berkat dukungan penuh dari para mentor, saya kini bisa bekerja dengan percaya diri di perusahaan Jepang."
+    },
+    {
+      id: 2,
+      name: "Siti Nurhaliza",
+      position: "IT Engineer",
+      content: "Program FITALENTA memberikan saya kesempatan emas untuk mengembangkan karir di bidang IT di Jepang. Pelatihan teknis dan bahasa yang diberikan sangat membantu adaptasi saya di lingkungan kerja baru."
+    },
+    {
+      id: 3,
+      name: "Budi Santoso",
+      position: "Manufacturing Specialist",
+      content: "Saya sangat berterima kasih kepada FITALENTA yang telah membimbing saya dari nol hingga mampu bekerja di perusahaan manufaktur Jepang. Proses pelatihannya sistematis dan mentor sangat berpengalaman."
+    }
+  ];
 
   useEffect(() => {
     fetchFeaturedPrograms();
   }, []);
+
+  useEffect(() => {
+    if (successStories.length > 1) {
+      const interval = setInterval(() => {
+        setCurrentStory((prev) => (prev + 1) % successStories.length);
+      }, 3000);
+
+      return () => clearInterval(interval);
+    }
+  }, [successStories.length]);
 
   const fetchFeaturedPrograms = async () => {
     try {
       setError("");
       const response = await axios.get("/api/programs");
       if (response.data.success) {
-        // Take first 3 programs as featured
         setFeaturedPrograms(response.data.data.slice(0, 3));
       } else {
         setError("Failed to load programs");
@@ -32,7 +64,7 @@ const Home = () => {
     }
   };
 
-  const waNumber = "6283821612483";
+  const waNumber = "6281110119273";
   const waMessage =
     "Halo Fitalenta, saya tertarik dengan program magang. Mohon info pendaftaran dan langkah selanjutnya. Terima kasih!";
   const waLink = `https://wa.me/${waNumber}?text=${encodeURIComponent(
@@ -45,7 +77,7 @@ const Home = () => {
         className="hero-section position-relative d-flex align-items-center"
         style={{
           minHeight: "92vh",
-          backgroundImage: "url('/images/hero.jpg')",
+          backgroundImage: "url('images/hero_home.jpg')",
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
@@ -54,7 +86,7 @@ const Home = () => {
       >
         <div
           className="position-absolute top-0 start-0 w-100 h-100"
-          style={{ backgroundColor: "rgba(0,0,0,0.45)" }}
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.59)" }}
           aria-hidden="true"
         ></div>
 
@@ -148,7 +180,7 @@ const Home = () => {
           <div className="col-md-4">
             <div className="card h-100 border-0 shadow-md p-3">
               <img
-                src="https://placehold.co/400x200"
+                src="images/home_regular.jpg"
                 alt=""
                 className="img-fluid"
               />
@@ -160,7 +192,7 @@ const Home = () => {
           <div className="col-md-4">
             <div className="card h-100 border-0 shadow-md p-3">
               <img
-                src="https://placehold.co/400x200"
+                src="images/home_hybrid.jpg"
                 alt=""
                 className="img-fluid"
               />
@@ -172,7 +204,7 @@ const Home = () => {
           <div className="col-md-4">
             <div className="card h-100 border-0 shadow-md p-3">
               <img
-                src="https://placehold.co/400x200"
+                src="images/home_fast_track.jpg"
                 alt=""
                 className="img-fluid"
               />
@@ -236,33 +268,34 @@ const Home = () => {
           <div className="col-12">
             <div className="bg-primary text-white p-4 p-md-5 rounded text-center">
               <h3 className="mb-3 text-uppercase">Success Stories</h3>
-              <p className="lead mb-4">
-                “Bergabung dengan FITALENTA adalah keputusan terbaik dalam hidup
-                saya. Saya mendapatkan pelatihan bahasa Jepang yang intensif,
-                pemahaman budaya kerja, serta bimbingan disiplin yang
-                benar-benar mempersiapkan saya menghadapi dunia kerja di Jepang.
-                Berkat dukungan penuh dari para mentor, saya kini bisa bekerja
-                dengan percaya diri di perusahaan Jepang.
-              </p>
 
-              <div className="d-flex align-items-center justify-content-center gap-3">
-                <img
-                  src="/images/andi.jpg"
-                  alt="Andi Salman AL-Farisi"
-                  loading="lazy"
-                  className="rounded-circle"
+              <div className="position-relative overflow-hidden" style={{ minHeight: "200px" }}>
+                <div
+                  className="d-flex transition-all"
                   style={{
-                    width: "clamp(40px, 6vw, 64px)",
-                    height: "clamp(40px, 6vw, 64px)",
-                    objectFit: "cover",
-                    border: "2px solid rgba(255,255,255,0.6)",
+                    transform: `translateX(-${currentStory * 100}%)`,
+                    transition: 'transform 0.5s ease-in-out'
                   }}
-                />
+                >
+                  {successStories.map((story, index) => (
+                    <div
+                      key={story.id}
+                      className="w-100 flex-shrink-0 px-2"
+                      style={{ minWidth: "100%" }}
+                    >
+                      <p className="lead mb-4">
+                        {story.content}
+                      </p>
 
-                <div className="text-start text-white small">
-                  <strong>Andi Salman AL-Farisi</strong>
-                  <br />
-                  <span>Kaigo</span>
+                      <div className="d-flex align-items-center justify-content-center gap-3">
+                        <div className="text-center text-white small">
+                          <strong>{story.name}</strong>
+                          <br />
+                          <span>{story.position}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>

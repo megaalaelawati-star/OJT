@@ -1,12 +1,4 @@
 const helpers = {
-  // formatCurrency: (amount) => {
-  //   if (amount === null || amount === undefined) return "-";
-  //   return new Intl.NumberFormat("id-ID", {
-  //     style: "currency",
-  //     currency: "IDR",
-  //     minimumFractionDigits: 0,
-  //   }).format(amount);
-  // },
   formatCurrency: (amount) => {
     if (!amount && amount !== 0) return "-";
     return new Intl.NumberFormat("id-ID", {

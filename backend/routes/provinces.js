@@ -1,10 +1,8 @@
-// backend/routes/provinces.js
 import express from "express";
 import db from "../config/database.js";
 
 const router = express.Router();
 
-// Get all provinces
 router.get("/", async (req, res) => {
   try {
     const [provinces] = await db.promise().query(`
@@ -24,7 +22,6 @@ router.get("/", async (req, res) => {
   }
 });
 
-// Get cities by province ID
 router.get("/:provinceId/cities", async (req, res) => {
   try {
     const provinceId = req.params.provinceId;

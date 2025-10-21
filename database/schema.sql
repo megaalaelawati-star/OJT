@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Oct 14, 2025 at 12:05 PM
+-- Generation Time: Oct 21, 2025 at 01:25 PM
 -- Server version: 8.0.30
 -- PHP Version: 7.4.33
 
@@ -18,7 +18,7 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `intern_registration_test`
+-- Database: `intern_registration`
 --
 
 -- --------------------------------------------------------
@@ -63,7 +63,11 @@ CREATE TABLE `payments` (
   `receipt_number` varchar(100) DEFAULT NULL,
   `notes` text,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `is_manual_invoice` tinyint(1) DEFAULT '0',
+  `installment_amounts` json DEFAULT NULL,
+  `current_installment_number` int DEFAULT '0',
+  `next_due_date` date DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
@@ -127,24 +131,23 @@ CREATE TABLE `programs` (
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `location` varchar(255) DEFAULT 'Jakarta, Indonesia & Jepang',
   `training_cost` decimal(10,2) DEFAULT '16000000.00',
+  `training_fee_details` text,
   `departure_cost` decimal(10,2) DEFAULT '30000000.00',
+  `departure_fee_details` text,
   `installment_plan` varchar(20) DEFAULT 'none',
   `bridge_fund` varchar(255) DEFAULT 'Tersedia (Jaminan dari perusahaan pengirim)',
-  `curriculum_json` json DEFAULT NULL,
-  `facilities_json` json DEFAULT NULL,
-  `timeline_json` json DEFAULT NULL,
-  `fee_details_json` json DEFAULT NULL,
-  `requirements_list` json DEFAULT NULL
+  `timeline_text` text,
+  `requirements_text` text
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `programs`
 --
 
-INSERT INTO `programs` (`id`, `category_id`, `name`, `description`, `requirements`, `schedule`, `duration`, `capacity`, `current_participants`, `status`, `contact_info`, `registration_deadline`, `start_date`, `end_date`, `created_at`, `updated_at`, `location`, `training_cost`, `departure_cost`, `installment_plan`, `bridge_fund`, `curriculum_json`, `facilities_json`, `timeline_json`, `fee_details_json`, `requirements_list`) VALUES
-(1, 1, 'Program Regular', 'Skema terbaik untuk persiapan intensif dan komprehensif. Dengan metode offline (Tatap Muka)', '- Mahasiswa TI/S1\n- Menguasai dasar pemrograman\n- Memahami konsep database', 'Senin-Jumat, 09:00-17:00', '4 bulan', 20, 0, 'active', 'Email: hr@company.com\nTelp: 021-1234567\nAlamat: Jl. Contoh No. 123', '2024-12-31', '2024-02-01', '2024-04-30', '2025-10-02 07:08:29', '2025-10-14 12:05:12', 'Jakarta, Indonesia & Jepang', '16000000.00', '30000000.00', '4_installments', 'Tersedia (Jaminan dari perusahaan pengirim)', '\"[\\n  {\\n    \\\"phase\\\": \\\"Fase 1 Dasar\\\",\\n    \\\"weeks\\\": [\\n      \\\"Minggu 1: Pengenalan Bahasa Jepang (Hiragana & Katakana)\\\",\\n      \\\"Minggu 2: Salam dasar, perkenalan diri, dan ungkapan sehari-hari\\\",\\n      \\\"Minggu 3: Angka, waktu, tanggal, dan kalimat sederhana\\\",\\n      \\\"Minggu 4: Tata bahasa dasar & kosakata untuk aktivitas harian\\\"\\n    ]\\n  },\\n  {\\n    \\\"phase\\\": \\\"Fase 2 Pengembangan Bahasa\\\",\\n    \\\"weeks\\\": [\\n      \\\"Minggu 5: Pengenalan dan latihan Kanji\\\",\\n      \\\"Minggu 6: Pola kalimat untuk bertanya & menjawab\\\",\\n      \\\"Minggu 7: Kosakata seputar pekerjaan, makanan, transportasi, dan kesehatan\\\",\\n      \\\"Minggu 8: Latihan mendengar & berbicara (role-play & percakapan)\\\"\\n    ]\\n  },\\n  {\\n    \\\"phase\\\": \\\"Fase 3 Budaya & Persiapan Kerja\\\",\\n    \\\"weeks\\\": [\\n      \\\"Minggu 9: Budaya Jepang, adat istiadat, dan tata krama\\\",\\n      \\\"Minggu 10: Etika kerja dan perilaku profesional\\\",\\n      \\\"Minggu 11: Keterampilan komunikasi & penyelesaian masalah\\\",\\n      \\\"Minggu 12: Simulasi wawancara & skenario dunia kerja\\\"\\n    ]\\n  },\\n  {\\n    \\\"phase\\\": \\\"Fase 4 Kesiapan Karier & Review Akhir\\\",\\n    \\\"weeks\\\": [\\n      \\\"Minggu 13: Latihan menulis (Kanji dasar & kalimat seputar pekerjaan)\\\",\\n      \\\"Minggu 14: Persiapan ujian (Latihan JLPT / NAT Test)\\\",\\n      \\\"Minggu 15: Presentasi akhir & simulasi wawancara kerja\\\",\\n      \\\"Minggu 16: Review, evaluasi, dan sesi konseling karier\\\"\\n    ]\\n  }\\n]\"', '\"{\\n  \\\"dormitory\\\": [\\n    \\\"Kamar tidur bersih & nyaman (kapasitas sesuai kebutuhan)\\\",\\n    \\\"Tempat tidur, lemari, meja belajar, dan kipas/AC\\\",\\n    \\\"Dapur bersama lengkap dengan peralatan memasak\\\",\\n    \\\"Kamar mandi dan toilet bersih (laki-laki & perempuan terpisah)\\\",\\n    \\\"Ruang makan & ruang santai\\\",\\n    \\\"Area olahraga ringan (lapangan kecil / gym sederhana)\\\",\\n    \\\"Laundry area (cuci & jemur pakaian)\\\",\\n    \\\"Lingkungan aman dengan pengawasan pengelola asrama\\\"\\n  ],\\n  \\\"education\\\": [\\n    \\\"Ruang kelas nyaman dengan meja dan kursi belajar\\\",\\n    \\\"Perangkat multimedia (proyektor, audio, dan papan tulis)\\\",\\n    \\\"Perpustakaan mini dengan buku dan materi bahasa Jepang\\\",\\n    \\\"Laboratorium bahasa untuk latihan mendengar dan berbicara\\\",\\n    \\\"Area diskusi dan ruang belajar bersama\\\",\\n    \\\"Akses internet (Wi-Fi) untuk mendukung pembelajaran\\\"\\n  ]\\n}\"', '\"[\\n  {\\n    \\\"month\\\": \\\"Bulan 1\\\",\\n    \\\"title\\\": \\\"Dasar Bahasa & Adaptasi\\\"\\n  },\\n  {\\n    \\\"month\\\": \\\"Bulan 2\\\",\\n    \\\"title\\\": \\\"Pengembangan Bahasa\\\"\\n  },\\n  {\\n    \\\"month\\\": \\\"Bulan 3\\\",\\n    \\\"title\\\": \\\"Budaya & Persiapan Kerja\\\"\\n  },\\n  {\\n    \\\"month\\\": \\\"Bulan 4\\\",\\n    \\\"title\\\": \\\"Persiapan Akhir & Evaluasi\\\"\\n  }\\n]\"', '\"{\\n  \\\"training_fee_items\\\": [\\n    \\\"Biaya administrasi pendaftaran\\\",\\n    \\\"Seragam pelatihan\\\",\\n    \\\"Modul & buku pelajaran bahasa Jepang\\\",\\n    \\\"Akses ke fasilitas kelas & laboratorium bahasa\\\",\\n    \\\"Fasilitas asrama (akomodasi & utilitas dasar selama pelatihan)\\\",\\n    \\\"Pendampingan & bimbingan belajar\\\"\\n  ],\\n  \\\"departure_fee_items\\\": [\\n    \\\"Tiket pesawat ke Jepang\\\",\\n    \\\"Visa & dokumen keberangkatan\\\",\\n    \\\"Asuransi perjalanan & kesehatan\\\",\\n    \\\"Biaya penempatan kerja di Jepang\\\",\\n    \\\"Pendampingan proses keberangkatan hingga penyaluran\\\"\\n  ]\\n}\"', '\"[\\n  \\\"Usia minimal 18 tahun\\\",\\n  \\\"Pendidikan minimal SMA/SMK sederajat\\\",\\n  \\\"Sehat jasmani & rohani (dibuktikan dengan surat keterangan sehat)\\\",\\n  \\\"Tidak memiliki catatan kriminal (SKCK)\\\",\\n  \\\"Memiliki laptop/komputer pribadi\\\",\\n  \\\"Dasar pemahaman komputer (tidak perlu pengalaman coding)\\\",\\n  \\\"Bersedia mengikuti seluruh rangkaian pelatihan hingga selesai\\\"\\n]\"'),
-(2, 2, 'Program Hybrid', 'Fleksibilitas pelatihan. Dengan metode offline (Tatap Muka) pemantapan di asrama dan online (Virtual)', '- Mahasiswa TI/DKV\n- Menguasai HTML, CSS, JavaScript\n- Pengalaman dengan framework frontend', 'Senin-Jumat, 09:00-17:00', '6 bulan', 15, 0, 'active', 'Email: hr@company.com\nTelp: 021-1234567\nAlamat: Jl. Contoh No. 123', '2024-12-31', '2024-02-01', '2024-04-30', '2025-10-02 07:08:29', '2025-10-14 10:05:44', 'Jakarta, Indonesia & Jepang', '7150000.00', '30000000.00', '6_installments', 'Tersedia (Jaminan dari perusahaan pengirim)', '\"[\\n  {\\n    \\\"phase\\\": \\\"Fase 1 Dasar\\\",\\n    \\\"weeks\\\": [\\n      \\\"Minggu 1: Pengenalan Bahasa Jepang (Hiragana & Katakana)\\\",\\n      \\\"Minggu 2: Salam dasar, perkenalan diri, dan ungkapan sehari-hari\\\",\\n      \\\"Minggu 3: Angka, waktu, tanggal, dan kalimat sederhana\\\",\\n      \\\"Minggu 4: Tata bahasa dasar & kosakata untuk aktivitas harian\\\"\\n    ]\\n  },\\n  {\\n    \\\"phase\\\": \\\"Fase 2 Pengembangan Bahasa\\\",\\n    \\\"weeks\\\": [\\n      \\\"Minggu 5: Pengenalan dan latihan Kanji\\\",\\n      \\\"Minggu 6: Pola kalimat untuk bertanya & menjawab\\\",\\n      \\\"Minggu 7: Kosakata seputar pekerjaan, makanan, transportasi, dan kesehatan\\\",\\n      \\\"Minggu 8: Latihan mendengar & berbicara (role-play & percakapan)\\\"\\n    ]\\n  },\\n  {\\n    \\\"phase\\\": \\\"Fase 3 Budaya & Persiapan Kerja\\\",\\n    \\\"weeks\\\": [\\n      \\\"Minggu 9: Budaya Jepang, adat istiadat, dan tata krama\\\",\\n      \\\"Minggu 10: Etika kerja dan perilaku profesional\\\",\\n      \\\"Minggu 11: Keterampilan komunikasi & penyelesaian masalah\\\",\\n      \\\"Minggu 12: Simulasi wawancara & skenario dunia kerja\\\"\\n    ]\\n  },\\n  {\\n    \\\"phase\\\": \\\"Fase 4 Kesiapan Karier & Review Akhir\\\",\\n    \\\"weeks\\\": [\\n      \\\"Minggu 13: Latihan menulis (Kanji dasar & kalimat seputar pekerjaan)\\\",\\n      \\\"Minggu 14: Persiapan ujian (Latihan JLPT / NAT Test)\\\",\\n      \\\"Minggu 15: Presentasi akhir & simulasi wawancara kerja\\\",\\n      \\\"Minggu 16: Review, evaluasi, dan sesi konseling karier\\\"\\n    ]\\n  }\\n]\"', '\"{\\n  \\\"dormitory\\\": [\\n    \\\"Kamar tidur bersih & nyaman (kapasitas sesuai kebutuhan)\\\",\\n    \\\"Tempat tidur, lemari, meja belajar, dan kipas/AC\\\",\\n    \\\"Dapur bersama lengkap dengan peralatan memasak\\\",\\n    \\\"Kamar mandi dan toilet bersih (laki-laki & perempuan terpisah)\\\",\\n    \\\"Ruang makan & ruang santai\\\",\\n    \\\"Area olahraga ringan (lapangan kecil / gym sederhana)\\\",\\n    \\\"Laundry area (cuci & jemur pakaian)\\\",\\n    \\\"Lingkungan aman dengan pengawasan pengelola asrama\\\"\\n  ],\\n  \\\"education\\\": [\\n    \\\"Ruang kelas nyaman dengan meja dan kursi belajar\\\",\\n    \\\"Perangkat multimedia (proyektor, audio, dan papan tulis)\\\",\\n    \\\"Perpustakaan mini dengan buku dan materi bahasa Jepang\\\",\\n    \\\"Laboratorium bahasa untuk latihan mendengar dan berbicara\\\",\\n    \\\"Area diskusi dan ruang belajar bersama\\\",\\n    \\\"Akses internet (Wi-Fi) untuk mendukung pembelajaran\\\"\\n  ]\\n}\"', '\"[\\n  {\\n    \\\"month\\\": \\\"Bulan 1\\\",\\n    \\\"title\\\": \\\"Dasar Bahasa & Adaptasi\\\"\\n  },\\n  {\\n    \\\"month\\\": \\\"Bulan 2\\\",\\n    \\\"title\\\": \\\"Pengembangan Bahasa\\\"\\n  },\\n  {\\n    \\\"month\\\": \\\"Bulan 3\\\",\\n    \\\"title\\\": \\\"Budaya & Persiapan Kerja\\\"\\n  },\\n  {\\n    \\\"month\\\": \\\"Bulan 4\\\",\\n    \\\"title\\\": \\\"Persiapan Akhir & Evaluasi\\\"\\n  }\\n]\"', '\"{\\n  \\\"training_fee_items\\\": [\\n    \\\"Biaya administrasi pendaftaran\\\",\\n    \\\"Seragam pelatihan\\\",\\n    \\\"Modul & buku pelajaran bahasa Jepang\\\",\\n    \\\"Akses ke fasilitas kelas & laboratorium bahasa\\\",\\n    \\\"Fasilitas asrama (akomodasi & utilitas dasar selama pelatihan)\\\",\\n    \\\"Pendampingan & bimbingan belajar\\\"\\n  ],\\n  \\\"departure_fee_items\\\": [\\n    \\\"Tiket pesawat ke Jepang\\\",\\n    \\\"Visa & dokumen keberangkatan\\\",\\n    \\\"Asuransi perjalanan & kesehatan\\\",\\n    \\\"Biaya penempatan kerja di Jepang\\\",\\n    \\\"Pendampingan proses keberangkatan hingga penyaluran\\\"\\n  ]\\n}\"', '\"[\\n  \\\"Usia minimal 18 tahun\\\",\\n  \\\"Pendidikan minimal SMA/SMK sederajat\\\",\\n  \\\"Sehat jasmani & rohani (dibuktikan dengan surat keterangan sehat)\\\",\\n  \\\"Tidak memiliki catatan kriminal (SKCK)\\\",\\n  \\\"Memiliki laptop/komputer pribadi\\\",\\n  \\\"Dasar pemahaman komputer (tidak perlu pengalaman coding)\\\",\\n  \\\"Bersedia mengikuti seluruh rangkaian pelatihan hingga selesai\\\"\\n]\"'),
-(3, 3, 'Program Fast Track', 'Jalur cepat untuk yang sudah memiliki sertifikat Noryoku Shiken N4 dan Specified Skilled Worker', '- Mahasiswa Statistika/TI/Matematika\n- Menguasai dasar statistik\n- Familiar dengan Python/R', 'Senin-Jumat, 09:00-17:00', '1 bulan', 12, 0, 'active', 'Email: hr@company.com\nTelp: 021-1234567\nAlamat: Jl. Contoh No. 123', '2024-12-31', '2024-02-01', '2024-05-31', '2025-10-02 07:08:29', '2025-10-14 12:05:12', 'Jakarta, Indonesia & Jepang', '4000000.00', '30000000.00', 'none', 'Tersedia (Jaminan dari perusahaan pengirim)', '\"[\\n  {\\n    \\\"phase\\\": \\\"Fase 1 Dasar\\\",\\n    \\\"weeks\\\": [\\n      \\\"Minggu 1: Pengenalan Bahasa Jepang (Hiragana & Katakana)\\\",\\n      \\\"Minggu 2: Salam dasar, perkenalan diri, dan ungkapan sehari-hari\\\",\\n      \\\"Minggu 3: Angka, waktu, tanggal, dan kalimat sederhana\\\",\\n      \\\"Minggu 4: Tata bahasa dasar & kosakata untuk aktivitas harian\\\"\\n    ]\\n  },\\n  {\\n    \\\"phase\\\": \\\"Fase 2 Pengembangan Bahasa\\\",\\n    \\\"weeks\\\": [\\n      \\\"Minggu 5: Pengenalan dan latihan Kanji\\\",\\n      \\\"Minggu 6: Pola kalimat untuk bertanya & menjawab\\\",\\n      \\\"Minggu 7: Kosakata seputar pekerjaan, makanan, transportasi, dan kesehatan\\\",\\n      \\\"Minggu 8: Latihan mendengar & berbicara (role-play & percakapan)\\\"\\n    ]\\n  },\\n  {\\n    \\\"phase\\\": \\\"Fase 3 Budaya & Persiapan Kerja\\\",\\n    \\\"weeks\\\": [\\n      \\\"Minggu 9: Budaya Jepang, adat istiadat, dan tata krama\\\",\\n      \\\"Minggu 10: Etika kerja dan perilaku profesional\\\",\\n      \\\"Minggu 11: Keterampilan komunikasi & penyelesaian masalah\\\",\\n      \\\"Minggu 12: Simulasi wawancara & skenario dunia kerja\\\"\\n    ]\\n  },\\n  {\\n    \\\"phase\\\": \\\"Fase 4 Kesiapan Karier & Review Akhir\\\",\\n    \\\"weeks\\\": [\\n      \\\"Minggu 13: Latihan menulis (Kanji dasar & kalimat seputar pekerjaan)\\\",\\n      \\\"Minggu 14: Persiapan ujian (Latihan JLPT / NAT Test)\\\",\\n      \\\"Minggu 15: Presentasi akhir & simulasi wawancara kerja\\\",\\n      \\\"Minggu 16: Review, evaluasi, dan sesi konseling karier\\\"\\n    ]\\n  }\\n]\"', '\"{\\n  \\\"dormitory\\\": [\\n    \\\"Kamar tidur bersih & nyaman (kapasitas sesuai kebutuhan)\\\",\\n    \\\"Tempat tidur, lemari, meja belajar, dan kipas/AC\\\",\\n    \\\"Dapur bersama lengkap dengan peralatan memasak\\\",\\n    \\\"Kamar mandi dan toilet bersih (laki-laki & perempuan terpisah)\\\",\\n    \\\"Ruang makan & ruang santai\\\",\\n    \\\"Area olahraga ringan (lapangan kecil / gym sederhana)\\\",\\n    \\\"Laundry area (cuci & jemur pakaian)\\\",\\n    \\\"Lingkungan aman dengan pengawasan pengelola asrama\\\"\\n  ],\\n  \\\"education\\\": [\\n    \\\"Ruang kelas nyaman dengan meja dan kursi belajar\\\",\\n    \\\"Perangkat multimedia (proyektor, audio, dan papan tulis)\\\",\\n    \\\"Perpustakaan mini dengan buku dan materi bahasa Jepang\\\",\\n    \\\"Laboratorium bahasa untuk latihan mendengar dan berbicara\\\",\\n    \\\"Area diskusi dan ruang belajar bersama\\\",\\n    \\\"Akses internet (Wi-Fi) untuk mendukung pembelajaran\\\"\\n  ]\\n}\"', '\"[\\n  {\\n    \\\"month\\\": \\\"Bulan 1\\\",\\n    \\\"title\\\": \\\"Dasar Bahasa & Adaptasi\\\"\\n  },\\n  {\\n    \\\"month\\\": \\\"Bulan 2\\\",\\n    \\\"title\\\": \\\"Pengembangan Bahasa\\\"\\n  },\\n  {\\n    \\\"month\\\": \\\"Bulan 3\\\",\\n    \\\"title\\\": \\\"Budaya & Persiapan Kerja\\\"\\n  },\\n  {\\n    \\\"month\\\": \\\"Bulan 4\\\",\\n    \\\"title\\\": \\\"Persiapan Akhir & Evaluasi\\\"\\n  }\\n]\"', '\"{\\n  \\\"training_fee_items\\\": [\\n    \\\"Biaya administrasi pendaftaran\\\",\\n    \\\"Seragam pelatihan\\\",\\n    \\\"Modul & buku pelajaran bahasa Jepang\\\",\\n    \\\"Akses ke fasilitas kelas & laboratorium bahasa\\\",\\n    \\\"Fasilitas asrama (akomodasi & utilitas dasar selama pelatihan)\\\",\\n    \\\"Pendampingan & bimbingan belajar\\\"\\n  ],\\n  \\\"departure_fee_items\\\": [\\n    \\\"Tiket pesawat ke Jepang\\\",\\n    \\\"Visa & dokumen keberangkatan\\\",\\n    \\\"Asuransi perjalanan & kesehatan\\\",\\n    \\\"Biaya penempatan kerja di Jepang\\\",\\n    \\\"Pendampingan proses keberangkatan hingga penyaluran\\\"\\n  ]\\n}\"', '\"[\\n  \\\"Usia minimal 18 tahun\\\",\\n  \\\"Pendidikan minimal SMA/SMK sederajat\\\",\\n  \\\"Sehat jasmani & rohani (dibuktikan dengan surat keterangan sehat)\\\",\\n  \\\"Tidak memiliki catatan kriminal (SKCK)\\\",\\n  \\\"Memiliki laptop/komputer pribadi\\\",\\n  \\\"Dasar pemahaman komputer (tidak perlu pengalaman coding)\\\",\\n  \\\"Bersedia mengikuti seluruh rangkaian pelatihan hingga selesai\\\"\\n]\"');
+INSERT INTO `programs` (`id`, `category_id`, `name`, `description`, `requirements`, `schedule`, `duration`, `capacity`, `current_participants`, `status`, `contact_info`, `registration_deadline`, `start_date`, `end_date`, `created_at`, `updated_at`, `location`, `training_cost`, `training_fee_details`, `departure_cost`, `departure_fee_details`, `installment_plan`, `bridge_fund`, `timeline_text`, `requirements_text`) VALUES
+(1, 1, 'Program Regular', 'Skema terbaik untuk persiapan intensif dan komprehensif.', '- Ijazah Minimal SMA/Sederajat\n- Sehat Jasmani & Rohani\n- Usia Maksimal 30 Tahun', 'Senin-Jumat, 09:00-17:00', '4 bulan', 20, 0, 'active', 'Email: info@fitalenta.co.id\nTelp: 0811 1011 9273\nAlamat: Gedung Science Techno Park ITB. Jl. Ganesa No.15E, Lb. Siliwangi, Kec. Coblong, Bandung 40132', '2024-12-31', '2024-02-01', '2024-04-30', '2025-10-02 07:08:29', '2025-10-21 05:31:44', 'Asrama Depok', '16000000.00', 'Biaya administrasi pendaftaran.\nSeragam pelatihan lengkap.\nModul, buku pelajaran bahasa Jepang, dan materi pendukung lainnya.\nAkses penuh ke fasilitas kelas dan laboratorium bahasa.\nFasilitas asrama (akomodasi dan utilitas dasar selama periode pelatihan).\nPendampingan dan bimbingan belajar intensif.', '30000000.00', 'Tiket pesawat ke Jepang (sekali jalan).\nPengurusan Visa Kerja & dokumen keberangkatan.\nAsuransi perjalanan dan asuransi kesehatan awal di Jepang.\nBiaya penempatan kerja di Jepang (termasuk administrasi penyaluran).\nPendampingan proses keberangkatan hingga penyaluran ke perusahaan di Jepang.', '4_installments', 'Tersedia (Jaminan dari perusahaan pengirim)', 'Bulan 1: Pelatihan Dasar Bahasa Jepang (Hiragana & Katakana)\r\nBulan 2: Pengembangan Kosakata dan Tata Bahasa\r\nBulan 3: Budaya Jepang dan Etika Kerja\r\nBulan 4: Persiapan Akhir dan Evaluasi', 'Minimal 18 tahun dan Maksimal 30 Tahun.\nMinimal Ijazah SMA/SMK Sederajat.\nSehat Jasmani & Rohani (Wajib dibuktikan dengan Surat Keterangan Sehat dari fasilitas kesehatan).\nTidak memiliki catatan kriminal (Wajib melampirkan Surat Keterangan Catatan Kepolisian/SKCK).\nBersedia mengikuti seluruh rangkaian pelatihan dan aturan asrama hingga selesai.'),
+(2, 2, 'Program Hybrid', 'Fleksibilitas pelatihan virtual dengan pemantapan di asrama.', '- Ijazah Minimal SMA/Sederajat\n- Sehat Jasmani & Rohani\n- Usia Maksimal 30 Tahun', 'Senin-Jumat, 09:00-17:00', '6 bulan', 15, 0, 'active', 'Email: info@fitalenta.co.id\nTelp: 0811 1011 9273\nAlamat: Gedung Science Techno Park ITB. Jl. Ganesa No.15E, Lb. Siliwangi, Kec. Coblong, Bandung 40132', '2024-12-31', '2024-02-01', '2024-04-30', '2025-10-02 07:08:29', '2025-10-21 05:31:54', '-', '7150000.00', 'Biaya administrasi pendaftaran.\nAkses ke platform pembelajaran virtual (LMS).\nModul & buku pelajaran digital bahasa Jepang. \nSesi live interaction & bimbingan virtual.\nFasilitas asrama (akomodasi & utilitas dasar) selama 1 bulan pemantapan luring.\nPendampingan & bimbingan belajar.', '30000000.00', 'Tiket pesawat ke Jepang Visa & dokumen keberangkatan \nAsuransi perjalanan & kesehatan \nBiaya penempatan kerja di Jepang\nPendampingan proses keberangkatan hingga penyaluran', '6_installments', 'Tersedia (Jaminan dari perusahaan pengirim)', 'Minggu 1-6: Pelatihan Dasar Bahasa Jepang (Virtual: Penguasaan Hiragana & Katakana).\nMinggu 7-12: Pengembangan Kosakata dan Tata Bahasa Lanjutan (Virtual: Fokus N5 dan Komunikasi Dasar).\nMinggu 13-20: Bahasa Lanjutan, Evaluasi Virtual, dan Persiapan Administratif (Virtual: Fokus N4, Self-Study, dan Pre-screening dokumen penempatan).\nMinggu 21-24: Pemantapan Budaya, Kesiapan Fisik/Mental, dan Penyaluran (Luring di Asrama: Etika Kerja, Simulasi Wawancara, Ujian Akhir, dan Proses Keberangkatan).', 'Minimal 18 tahun dan Maksimal 30 Tahun.\nMinimal Ijazah SMA/SMK Sederajat.\nSehat Jasmani & Rohani (Wajib dibuktikan dengan Surat Keterangan Sehat dari fasilitas kesehatan).\nTidak memiliki catatan kriminal (Wajib melampirkan Surat Keterangan Catatan Kepolisian/SKCK).\nBersedia mengikuti seluruh rangkaian pelatihan dan aturan asrama hingga selesai.'),
+(3, 3, 'Program Fast Track', 'Jalur cepat untuk yang sudah memiliki sertifikat Noryoku Shiken N4 dan Specified Skilled Worker', '- Mahasiswa Statistika/TI/Matematika\n- Menguasai dasar statistik\n- Familiar dengan Python/R', 'Senin-Jumat, 09:00-17:00', '1 bulan', 12, 0, 'active', 'Email: info@fitalenta.co.id\nTelp: 0811 1011 9273\nAlamat: Gedung Science Techno Park ITB. Jl. Ganesa No.15E, Lb. Siliwangi, Kec. Coblong, Bandung 40132', '2024-12-31', '2024-02-01', '2024-05-31', '2025-10-02 07:08:29', '2025-10-21 11:07:39', 'Jakarta, Indonesia & Jepang', '4000000.00', 'Biaya administrasi dan pendaftaran\nVerifikasi sertifikat N4 / Sertifikat Keahlian (SSW)\nOrientasi budaya kerja dan etika bisnis (1 bulan) \nKonsultasi persiapan keberangkatan dan wawancara \nAkses ke fasilitas kelas/ruangan briefing', '30000000.00', 'Tiket pesawat ke Jepang Visa dan dokumen keberangkatan \nAsuransi perjalanan dan kesehatan awal\nBiaya penempatan kerja di Jepang\nProcessing fee administrasi penyaluran', 'none', 'Tersedia (Jaminan dari perusahaan pengirim)', 'Minggu 1: Verifikasi Dokumen, Sertifikat N4/SSW, dan Keahlian Teknis \nMinggu 2: Orientasi Budaya Kerja, Etika Jepang (Horenso), dan Simulasi Wawancara \nMinggu 3: Pengurusan Dokumen Administrasi Keberangkatan dan Visa\nMinggu 4: Briefing Akhir, Matching Perusahaan, dan Pemberangkatan', 'Memiliki sertifikat Noryoku Shiken N4\nMemiliki sertifikat Specified Skilled Worker (SSW)\nMinimal 18 tahun dan Maksimal 30 Tahun.\nMinimal Ijazah SMA/SMK Sederajat.\nSehat Jasmani & Rohani (Wajib dibuktikan dengan Surat Keterangan Sehat dari fasilitas kesehatan).\nTidak memiliki catatan kriminal (Wajib melampirkan Surat Keterangan Catatan Kepolisian/SKCK).\nBersedia mengikuti seluruh rangkaian pelatihan dan aturan asrama hingga selesai.');
 
 -- --------------------------------------------------------
 
@@ -178,6 +181,7 @@ CREATE TABLE `registrations` (
   `id` int NOT NULL,
   `user_id` int DEFAULT NULL,
   `program_id` int DEFAULT NULL,
+  `registration_status` enum('menunggu','lolos','tidak_lolos') DEFAULT 'menunggu',
   `registration_code` varchar(50) NOT NULL,
   `selection_notes` text,
   `registration_date` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
@@ -206,6 +210,22 @@ CREATE TABLE `registrations` (
   `photo_path` varchar(255) DEFAULT NULL,
   `n4_certificate_path` varchar(255) DEFAULT NULL,
   `ssw_certificate_path` varchar(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `registration_status_history`
+--
+
+CREATE TABLE `registration_status_history` (
+  `id` int NOT NULL,
+  `registration_id` int DEFAULT NULL,
+  `old_status` enum('menunggu','lolos','tidak_lolos') DEFAULT NULL,
+  `new_status` enum('menunggu','lolos','tidak_lolos') DEFAULT NULL,
+  `notes` text,
+  `changed_by` int DEFAULT NULL,
+  `changed_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
@@ -250,10 +270,9 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `email`, `password`, `full_name`, `phone`, `address`, `user_type`, `created_at`, `updated_at`, `birth_place`, `birth_date`) VALUES
-(1, 'admin@gmail.com', '$2a$12$xJy3WDCbb37u0BCUepQTk.QL7A7B8hrka0.ZH6gh1NwN3PljrMufG', 'Administrator', NULL, NULL, 'admin', '2025-10-02 07:08:29', '2025-10-08 14:18:35', NULL, NULL),
-(2, 'user1@gmail.com', '$2b$12$fUFKEx8PzceLegKWIkl22ORmWbNR7lT31Tl1yziq6M0wnGqx3AZDy', 'User 1', '08882124339', '', 'participant', '2025-10-14 03:54:40', '2025-10-14 10:20:52', NULL, NULL),
-(3, 'user2@gmail.com', '$2b$12$sxC10o8ST9Ui3GUun736Xuf0q2OFaxiclZ0SxBytLrLmcNkJUhThy', 'User 2', '083821612483', '', 'participant', '2025-10-14 09:11:09', '2025-10-14 10:12:29', NULL, NULL),
-(4, 'user3@gmail.com', '$2b$12$9vyFQn4ULHMhyC/u/VPVsOsKBQk8Biow.Cv6Wdq.Jp/VKl3a0c0eS', 'User 3', '08333333333', 'Jl. User 3', 'participant', '2025-10-14 09:43:06', '2025-10-14 09:45:34', NULL, NULL);
+(1, 'admin@gmail.com', '$2a$12$xJy3WDCbb37u0BCUepQTk.QL7A7B8hrka0.ZH6gh1NwN3PljrMufG', 'Admin Fitalenta', '081312557168', '', 'admin', '2025-10-02 07:08:29', '2025-10-21 12:19:54', NULL, NULL),
+(5, 'user1@gmail.com', '$2b$12$tEe5PStStL4/aqC56ZSIX.ytdeaGPveMAOGxO3BC.Df45ZjEoag2a', 'User 1', '', '', 'participant', '2025-10-21 12:21:55', '2025-10-21 12:21:55', NULL, NULL),
+(6, 'user2@gmail.com', '$2b$12$Im8LbTmbb4mYZaaeZCwqY.e00xuELRmGH01eSJkd2kcLccFWnh/t6', 'User 2', '', '', 'participant', '2025-10-21 12:22:54', '2025-10-21 12:22:54', NULL, NULL);
 
 --
 -- Indexes for dumped tables
@@ -321,6 +340,14 @@ ALTER TABLE `registrations`
   ADD KEY `idx_registration_code` (`registration_code`);
 
 --
+-- Indexes for table `registration_status_history`
+--
+ALTER TABLE `registration_status_history`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `registration_id` (`registration_id`),
+  ADD KEY `changed_by` (`changed_by`);
+
+--
 -- Indexes for table `selection_status`
 --
 ALTER TABLE `selection_status`
@@ -352,19 +379,19 @@ ALTER TABLE `notifications`
 -- AUTO_INCREMENT for table `payments`
 --
 ALTER TABLE `payments`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `payment_history`
 --
 ALTER TABLE `payment_history`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `placement_status`
 --
 ALTER TABLE `placement_status`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `programs`
@@ -382,19 +409,25 @@ ALTER TABLE `program_categories`
 -- AUTO_INCREMENT for table `registrations`
 --
 ALTER TABLE `registrations`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT for table `registration_status_history`
+--
+ALTER TABLE `registration_status_history`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `selection_status`
 --
 ALTER TABLE `selection_status`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- Constraints for dumped tables
@@ -438,6 +471,13 @@ ALTER TABLE `programs`
 ALTER TABLE `registrations`
   ADD CONSTRAINT `registrations_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `registrations_ibfk_2` FOREIGN KEY (`program_id`) REFERENCES `programs` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `registration_status_history`
+--
+ALTER TABLE `registration_status_history`
+  ADD CONSTRAINT `registration_status_history_ibfk_1` FOREIGN KEY (`registration_id`) REFERENCES `registrations` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `registration_status_history_ibfk_2` FOREIGN KEY (`changed_by`) REFERENCES `users` (`id`);
 
 --
 -- Constraints for table `selection_status`

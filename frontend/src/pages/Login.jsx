@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
@@ -11,8 +11,19 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const { login } = useAuth();
+  const { login, isAuthenticated, isAdmin, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+
+  // Redirect jika sudah login
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      if (isAdmin) {
+        navigate("/admin", { replace: true });
+      } else {
+        navigate("/dashboard", { replace: true });
+      }
+    }
+  }, [isAuthenticated, isAdmin, authLoading, navigate]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -27,6 +38,12 @@ const Login = () => {
     setLoading(true);
     setError("");
 
+    if (!formData.email || !formData.password) {
+      setError("Email dan password harus diisi");
+      setLoading(false);
+      return;
+    }
+
     const result = await login(
       formData.email,
       formData.password,
@@ -34,7 +51,7 @@ const Login = () => {
     );
 
     if (result.success) {
-      navigate(formData.isAdmin ? "/admin" : "/dashboard");
+      // Redirect sudah ditangani oleh useEffect
     } else {
       setError(result.message);
     }
@@ -42,17 +59,38 @@ const Login = () => {
     setLoading(false);
   };
 
+  // Tampilkan loading saat authLoading (sedang memeriksa status login)
+  if (authLoading) {
+    return (
+      <div className="container mt-5">
+        <div className="row justify-content-center">
+          <div className="col-md-6">
+            <div className="card">
+              <div className="card-body text-center">
+                <div className="spinner-border text-primary" role="status">
+                  <span className="visually-hidden">Loading...</span>
+                </div>
+                <p className="mt-2">Memeriksa autentikasi...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mt-5">
       <div className="row justify-content-center">
         <div className="col-md-6">
-          <div className="card">
-            <div className="card-header">
+          <div className="card shadow">
+            <div className="card-header bg-primary text-white">
               <h4 className="mb-0">Login</h4>
             </div>
             <div className="card-body">
               {error && (
                 <div className="alert alert-danger" role="alert">
+                  <i className="bi bi-exclamation-triangle-fill me-2"></i>
                   {error}
                 </div>
               )}
@@ -60,7 +98,7 @@ const Login = () => {
               <form onSubmit={handleSubmit}>
                 <div className="mb-3">
                   <label htmlFor="email" className="form-label">
-                    {formData.isAdmin ? "Username" : "Email Address"} *
+                    {formData.isAdmin ? "Email Address" : "Email Address"} *
                   </label>
                   <input
                     type="text"
@@ -70,6 +108,8 @@ const Login = () => {
                     value={formData.email}
                     onChange={handleChange}
                     required
+                    disabled={loading}
+                    placeholder={formData.isAdmin ? "admin@gmail.com" : "user@gmail.com"}
                   />
                 </div>
 
@@ -85,6 +125,8 @@ const Login = () => {
                     value={formData.password}
                     onChange={handleChange}
                     required
+                    disabled={loading}
+                    placeholder="••••••"
                   />
                 </div>
 
@@ -96,6 +138,7 @@ const Login = () => {
                     name="isAdmin"
                     checked={formData.isAdmin}
                     onChange={handleChange}
+                    disabled={loading}
                   />
                   <label className="form-check-label" htmlFor="isAdmin">
                     Login sebagai Admin
@@ -105,7 +148,7 @@ const Login = () => {
                 <div className="d-grid">
                   <button
                     type="submit"
-                    className="btn btn-primary"
+                    className="btn btn-primary btn-lg"
                     disabled={loading}
                   >
                     {loading ? (
@@ -123,11 +166,25 @@ const Login = () => {
               <div className="mt-3 text-center">
                 <p className="mb-0">
                   {formData.isAdmin ? (
-                    "Login sebagai peserta?"
+                    <span>
+                      Login sebagai peserta?{" "}
+                      <Link
+                        to="/login"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setFormData(prev => ({ ...prev, isAdmin: false, email: "", password: "" }));
+                        }}
+                        className="text-decoration-none fw-semibold"
+                      >
+                        Klik di sini
+                      </Link>
+                    </span>
                   ) : (
                     <>
                       Belum punya akun?{" "}
-                      <Link to="/register">Daftar di sini</Link>
+                      <Link to="/register" className="text-decoration-none fw-semibold">
+                        Daftar di sini
+                      </Link>
                     </>
                   )}
                 </p>
@@ -135,13 +192,18 @@ const Login = () => {
 
               <div className="mt-4">
                 <div className="alert alert-info">
-                  <strong>Demo Credentials:</strong>
+                  <strong>
+                    <i className="bi bi-info-circle-fill me-2"></i>
+                    Demo Credentials:
+                  </strong>
                   <br />
-                  Admin: admin@gmail.com / admin
-                  <br />
-                  User 1: user1@gmail.com / user1
-                  <br />
-                  User 2: user2@gmail.com / user2
+                  <div className="mt-2">
+                    <strong>Admin:</strong> admin@gmail.com / admin
+                    <br />
+                    <strong>User 1:</strong> user1@gmail.com / user123
+                    <br />
+                    <strong>User 2:</strong> user2@gmail.com / user321
+                  </div>
                 </div>
               </div>
             </div>

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useCallback } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
@@ -6,30 +6,39 @@ const Navbar = () => {
   const { user, logout, isAuthenticated, isAdmin, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [logoError, setLogoError] = useState(false);
 
-  const isActive = (path) => {
-    if (path === "/") {
-      return location.pathname === "/" ? "active" : "";
-    }
-    return location.pathname.startsWith(path) ? "active" : "";
-  };
+  if (!useAuth) {
+    console.error("AuthContext is not available");
+    return null;
+  }
+
+  const isActive = useCallback(
+    (path) => {
+      if (path === "/") {
+        return location.pathname === "/" ? "active" : "";
+      }
+      return location.pathname.startsWith(path) ? "active" : "";
+    },
+    [location.pathname]
+  );
 
   const handleLogout = () => {
     logout();
     navigate("/");
   };
 
-  // Loading state
   if (loading) {
     return (
       <nav className="navbar navbar-expand-lg navbar-dark bg-primary">
-        <div className="container">
+        <div className="container d-flex justify-content-center align-items-center py-2">
           <div
-            className="spinner-border spinner-border-sm text-light"
+            className="spinner-border spinner-border-sm text-light me-2"
             role="status"
           >
             <span className="visually-hidden">Loading...</span>
           </div>
+          <span className="text-light">Loading...</span>
         </div>
       </nav>
     );
@@ -38,19 +47,19 @@ const Navbar = () => {
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
       <div className="container">
-        {/* Logo di Kiri */}
+        {/* Logo dengan error handling yang lebih baik */}
         <Link className="navbar-brand fw-bold d-flex align-items-center" to="/">
-          <img
-            src="/images/logo/fitalenta_2024.png"
-            alt="FITALENTA Logo"
-            height="50"
-            className="me-2"
-            onError={(e) => {
-              e.target.style.display = "none";
-              e.target.nextSibling.style.display = "block";
-            }}
-          />
-          <span style={{ display: "none" }}>FITALENTA</span>
+          {!logoError ? (
+            <img
+              src="/images/logo/fitalenta_2024.png"
+              alt="FITALENTA Logo"
+              height="50"
+              className="me-2"
+              onError={() => setLogoError(true)}
+            />
+          ) : (
+            <span className="text-light">FITALENTA</span>
+          )}
         </Link>
 
         {/* Toggler untuk Mobile */}
@@ -68,7 +77,7 @@ const Navbar = () => {
 
         <div className="collapse navbar-collapse" id="navbarNav">
           <ul className="navbar-nav mx-auto">
-            {/* Menu Public HANYA untuk user yang belum login */}
+            {/* Menu Public hanya untuk user yang belum login */}
             {!isAuthenticated ? (
               <>
                 <li className="nav-item">
@@ -76,17 +85,17 @@ const Navbar = () => {
                     Home
                   </Link>
                 </li>
-                <li className="nav-item border-end border-light border-opacity-25 mx-2"></li>
+                <li className="nav-item border-end border-light border-opacity-25 mx-2 d-none d-lg-block"></li>
 
                 <li className="nav-item">
                   <Link
                     className={`nav-link ${isActive("/programs")}`}
                     to="/programs"
                   >
-                    Programs
+                    Program
                   </Link>
                 </li>
-                <li className="nav-item border-end border-light border-opacity-25 mx-2"></li>
+                <li className="nav-item border-end border-light border-opacity-25 mx-2 d-none d-lg-block"></li>
 
                 <li className="nav-item">
                   <Link
@@ -96,7 +105,7 @@ const Navbar = () => {
                     About Us
                   </Link>
                 </li>
-                <li className="nav-item border-end border-light border-opacity-25 mx-2"></li>
+                <li className="nav-item border-end border-light border-opacity-25 mx-2 d-none d-lg-block"></li>
 
                 <li className="nav-item">
                   <Link
@@ -108,7 +117,7 @@ const Navbar = () => {
                 </li>
               </>
             ) : (
-              /* Menu untuk User yang SUDAH Login */
+              /* Menu untuk User yang sudah login */
               <>
                 {/* Menu untuk User Biasa */}
                 {!isAdmin && (
@@ -121,7 +130,7 @@ const Navbar = () => {
                         Overview
                       </Link>
                     </li>
-                    <li className="nav-item border-end border-light border-opacity-25 mx-2"></li>
+                    <li className="nav-item border-end border-light border-opacity-25 mx-2 d-none d-lg-block"></li>
 
                     <li className="nav-item">
                       <Link
@@ -131,7 +140,7 @@ const Navbar = () => {
                         Registration
                       </Link>
                     </li>
-                    <li className="nav-item border-end border-light border-opacity-25 mx-2"></li>
+                    <li className="nav-item border-end border-light border-opacity-25 mx-2 d-none d-lg-block"></li>
 
                     <li className="nav-item">
                       <Link
@@ -155,7 +164,7 @@ const Navbar = () => {
                         Dashboard
                       </Link>
                     </li>
-                    <li className="nav-item border-end border-light border-opacity-25 mx-2"></li>
+                    <li className="nav-item border-end border-light border-opacity-25 mx-2 d-none d-lg-block"></li>
 
                     <li className="nav-item dropdown">
                       <a
@@ -166,10 +175,15 @@ const Navbar = () => {
                         role="button"
                         data-bs-toggle="dropdown"
                         aria-expanded="false"
+                        aria-haspopup="true"
+                        id="managementDropdown"
                       >
                         Management
                       </a>
-                      <ul className="dropdown-menu">
+                      <ul
+                        className="dropdown-menu"
+                        aria-labelledby="managementDropdown"
+                      >
                         <li>
                           <Link
                             className={`dropdown-item ${isActive(
@@ -225,7 +239,7 @@ const Navbar = () => {
             )}
           </ul>
 
-          {/* Menu Kanan - Login/Register atau User Dropdown */}
+          {/* Login/Register atau User Dropdown */}
           <ul className="navbar-nav">
             {!isAuthenticated ? (
               <div className="d-flex align-items-center">
@@ -237,7 +251,7 @@ const Navbar = () => {
                     Login
                   </Link>
                 </li>
-                <li className="nav-item">
+                <li className="nav-item ms-2">
                   <Link
                     className={`nav-link ${isActive("/register")}`}
                     to="/register"
@@ -254,39 +268,26 @@ const Navbar = () => {
                   role="button"
                   data-bs-toggle="dropdown"
                   aria-expanded="false"
+                  aria-haspopup="true"
+                  id="userDropdown"
                 >
-                  <span className="d-none d-md-inline">👋 </span>
-                  <span className="ms-1">{user?.full_name || user?.email}</span>
+                  <span
+                    className="user-avatar bg-light rounded-circle d-inline-flex align-items-center justify-content-center me-2"
+                    style={{ width: "32px", height: "32px" }}
+                  >
+                    <i className="bi bi-person-fill text-primary"></i>
+                  </span>
+                  <span className="d-none d-md-inline ms-1">
+                    {user?.full_name || user?.email || "User"}
+                  </span>
                   {isAdmin && (
                     <span className="badge bg-warning ms-2">Admin</span>
                   )}
                 </a>
-                <ul className="dropdown-menu dropdown-menu-end">
-                  {/* <li>
-                    <Link className="dropdown-item" to="/dashboard">
-                      <i className="bi bi-speedometer2 me-2"></i>
-                      My Dashboard
-                    </Link>
-                  </li>
-                  {!isAdmin && (
-                    <>
-                      <li>
-                        <Link className="dropdown-item" to="/programs">
-                          <i className="bi bi-list-ul me-2"></i>
-                          Programs
-                        </Link>
-                      </li>
-                      <li>
-                        <Link className="dropdown-item" to="/payment">
-                          <i className="bi bi-credit-card me-2"></i>
-                          Payment
-                        </Link>
-                      </li>
-                    </>
-                  )}
-                  <li>
-                    <hr className="dropdown-divider" />
-                  </li> */}
+                <ul
+                  className="dropdown-menu dropdown-menu-end"
+                  aria-labelledby="userDropdown"
+                >
                   <li>
                     <button
                       className="dropdown-item text-danger"

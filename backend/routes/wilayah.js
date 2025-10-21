@@ -3,7 +3,6 @@ import axios from "axios";
 
 const router = express.Router();
 
-// Proxy untuk mendapatkan provinsi
 router.get("/provinces", async (req, res) => {
   try {
     const response = await axios.get("https://wilayah.id/api/provinces.json");
@@ -20,7 +19,6 @@ router.get("/provinces", async (req, res) => {
   }
 });
 
-// Proxy untuk mendapatkan kabupaten/kota
 router.get("/regencies/:provinceCode", async (req, res) => {
   try {
     const { provinceCode } = req.params;
@@ -40,7 +38,6 @@ router.get("/regencies/:provinceCode", async (req, res) => {
   }
 });
 
-// Proxy untuk mendapatkan kecamatan (opsional, untuk future use)
 router.get("/districts/:regencyCode", async (req, res) => {
   try {
     const { regencyCode } = req.params;

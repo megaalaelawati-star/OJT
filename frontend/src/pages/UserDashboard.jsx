@@ -50,14 +50,19 @@ const UserDashboard = () => {
       overdue: { class: "danger", text: "Jatuh Tempo" },
       cancelled: { class: "secondary", text: "Dibatalkan" },
 
-      // Status seleksi
       menunggu: { class: "warning", text: "Menunggu" },
       lolos: { class: "success", text: "Lolos" },
       tidak_lolos: { class: "danger", text: "Tidak Lolos" },
 
-      // Status penempatan
       proses: { class: "warning", text: "Proses" },
       ditempatkan: { class: "success", text: "Ditempatkan" },
+
+      registration_menunggu: { class: "warning", text: "Menunggu Interview" },
+      registration_lolos: { class: "success", text: "Lolos Interview" },
+      registration_tidak_lolos: {
+        class: "danger",
+        text: "Tidak Lolos Interview",
+      },
     };
 
     const config = statusConfig[status] || {
@@ -65,7 +70,21 @@ const UserDashboard = () => {
       text: status || "-",
     };
 
-    // Return JSX langsung, bukan string dengan HTML
+    return <span className={`badge bg-${config.class}`}>{config.text}</span>;
+  };
+
+  const getRegistrationStatusBadge = (status) => {
+    const statusConfig = {
+      menunggu: { class: "warning", text: "Menunggu Interview" },
+      lolos: { class: "success", text: "Lolos Interview" },
+      tidak_lolos: { class: "danger", text: "Tidak Lolos Interview" },
+    };
+
+    const config = statusConfig[status] || {
+      class: "secondary",
+      text: "Belum Ditentukan",
+    };
+
     return <span className={`badge bg-${config.class}`}>{config.text}</span>;
   };
 
@@ -73,6 +92,7 @@ const UserDashboard = () => {
     if (!registrations || registrations.length === 0) {
       return {
         paymentStatus: { status: "-" },
+        registrationStatus: { status: "-" },
         selectionStatus: { status: "-" },
         placementStatus: { status: "-" },
         programName: "-",
@@ -82,7 +102,6 @@ const UserDashboard = () => {
 
     const latestRegistration = registrations[0];
 
-    // Fungsi untuk menentukan class status pembayaran
     const getPaymentStatusClass = (paymentStatus) => {
       if (paymentStatus === "paid") return "success";
       if (paymentStatus && paymentStatus.startsWith("installment_"))
@@ -93,7 +112,6 @@ const UserDashboard = () => {
       return "secondary";
     };
 
-    // Fungsi untuk menentukan teks status pembayaran
     const getPaymentStatusText = (paymentStatus) => {
       if (paymentStatus === "paid") return "Lunas";
       if (paymentStatus === "installment_1") return "Cicilan 1";
@@ -112,6 +130,15 @@ const UserDashboard = () => {
       paymentStatus: {
         status: getPaymentStatusText(latestRegistration.payment_status),
         class: getPaymentStatusClass(latestRegistration.payment_status),
+      },
+      registrationStatus: {
+        status: latestRegistration.registration_status || "menunggu",
+        class:
+          latestRegistration.registration_status === "lolos"
+            ? "success"
+            : latestRegistration.registration_status === "tidak_lolos"
+            ? "danger"
+            : "warning",
       },
       selectionStatus: {
         status: latestRegistration.selection_status || "-",
@@ -172,7 +199,7 @@ const UserDashboard = () => {
   return (
     <div className="container mt-4">
       {/* Header */}
-      <div className="row mb-4">
+      <div className="row">
         <div className="col-12">
           <div className="d-flex justify-content-between align-items-center">
             <div>
@@ -198,9 +225,28 @@ const UserDashboard = () => {
         </div>
       </div>
 
-      {/* Statistics Cards - Dinamis */}
+      {/* Additional Information */}
+      {registrations.length > 0 && (
+        <div className="row my-3">
+          <div className="col-12">
+            <div className="alert alert-info">
+              <h6>Informasi Penting:</h6>
+              <ul className="mb-0">
+                <li>Status akan diperbarui secara real-time oleh admin</li>
+                <li>Untuk pertanyaan mengenai status, hubungi admin</li>
+                <li>Proses interview membutuhkan waktu 3-5 hari kerja</li>
+                <li>
+                  Nama perusahaan akan ditentukan setelah proses seleksi selesai
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Statistics Cards */}
       <div className="row mb-4">
-        <div className="col-md-4 mb-3">
+        <div className="col-md-4">
           <div className={`card bg-primary text-white h-100`}>
             <div className="card-body">
               <div className="text-center">
@@ -211,7 +257,7 @@ const UserDashboard = () => {
           </div>
         </div>
 
-        <div className="col-md-4 mb-3">
+        <div className="col-md-4">
           <div className={`card bg-primary text-white h-100`}>
             <div className="card-body">
               <div className="text-center">
@@ -222,7 +268,7 @@ const UserDashboard = () => {
           </div>
         </div>
 
-        <div className="col-md-4 mb-3">
+        <div className="col-md-4">
           <div className="card bg-primary text-white h-100">
             <div className="card-body">
               <div className="text-center">
@@ -234,7 +280,7 @@ const UserDashboard = () => {
         </div>
       </div>
 
-      {/* Detail Program Table - Dinamis */}
+      {/* Detail Program Table */}
       <div className="row">
         <div className="col-12">
           <div className="card">
@@ -250,9 +296,9 @@ const UserDashboard = () => {
                         <th>Nama Program</th>
                         <th>Kode Pendaftaran</th>
                         <th>Tanggal Pendaftaran</th>
-                        <th>Status Seleksi</th>
+                        <th>Status Pendaftaran (Interview)</th>
+                        <th>Status Seleksi (Diklat)</th>
                         <th>Status Penyaluran</th>
-                        <th>Batas Pembayaran</th>
                         <th>Nama Perusahaan</th>
                       </tr>
                     </thead>
@@ -271,25 +317,15 @@ const UserDashboard = () => {
                             {helpers.formatDate(registration.registration_date)}
                           </td>
                           <td>
+                            {getRegistrationStatusBadge(
+                              registration.registration_status
+                            )}
+                          </td>
+                          <td>
                             {getStatusBadge(registration.selection_status)}
                           </td>
                           <td>
                             {getStatusBadge(registration.placement_status)}
-                          </td>
-                          <td>
-                            {registration.due_date ? (
-                              <span
-                                className={
-                                  new Date(registration.due_date) < new Date()
-                                    ? "text-danger"
-                                    : "text-muted"
-                                }
-                              >
-                                {helpers.formatDate(registration.due_date)}
-                              </span>
-                            ) : (
-                              "-"
-                            )}
                           </td>
                           <td>
                             {registration.company_name ? (
@@ -325,25 +361,6 @@ const UserDashboard = () => {
           </div>
         </div>
       </div>
-
-      {/* Additional Information */}
-      {registrations.length > 0 && (
-        <div className="row mt-4">
-          <div className="col-12">
-            <div className="alert alert-info">
-              <h6>Informasi Penting:</h6>
-              <ul className="mb-0">
-                <li>Status akan diperbarui secara real-time oleh admin</li>
-                <li>Untuk pertanyaan mengenai pembayaran, hubungi admin</li>
-                <li>Proses seleksi membutuhkan waktu 1-2 minggu</li>
-                <li>
-                  Nama perusahaan akan ditentukan setelah proses seleksi selesai
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

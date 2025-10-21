@@ -29,20 +29,20 @@ const Contact = () => {
     {
       icon: "bi-telephone",
       title: "Telepon",
-      content: "+62 21 1234 5678",
+      content: "+62 811 1011 9273",
       link: "tel:+622112345678",
     },
     {
       icon: "bi-whatsapp",
       title: "WhatsApp",
-      content: "+62 838 2161 2483",
-      link: "https://wa.me/6283821612483",
+      content: "+62 811 1011 9273",
+      link: "https://wa.me/6281110119273",
     },
     {
       icon: "bi-envelope",
       title: "Email",
-      content: "info@fitalenta.com",
-      link: "mailto:info@fitalenta.com",
+      content: "info@fitalenta.co.id",
+      link: "mailto:info@fitalenta.co.id",
     },
     
   ];
@@ -51,32 +51,20 @@ const Contact = () => {
     {
       name: "Facebook",
       icon: "bi-facebook",
-      url: "https://facebook.com/fitalenta",
+      url: "https://www.facebook.com/people/PT-FAST-Indo-Talenta/61550075167981/",
       color: "text-primary",
     },
     {
       name: "Instagram",
       icon: "bi-instagram",
-      url: "https://instagram.com/fitalenta",
+      url: "https://www.instagram.com/fitalenta.id/",
       color: "text-danger",
-    },
-    {
-      name: "Twitter",
-      icon: "bi-twitter",
-      url: "https://twitter.com/fitalenta",
-      color: "text-info",
     },
     {
       name: "LinkedIn",
       icon: "bi-linkedin",
-      url: "https://linkedin.com/company/fitalenta",
+      url: "https://www.facebook.com/people/PT-FAST-Indo-Talenta/61550075167981/",
       color: "text-primary",
-    },
-    {
-      name: "YouTube",
-      icon: "bi-youtube",
-      url: "https://youtube.com/fitalenta",
-      color: "text-danger",
     },
   ];
 
@@ -101,7 +89,6 @@ const Contact = () => {
           "Pesan Anda telah berhasil dikirim! Kami akan menghubungi Anda dalam 1x24 jam.",
       });
 
-      // Reset form
       setFormData({
         name: "",
         email: "",
@@ -127,7 +114,7 @@ const Contact = () => {
         className="hero-section position-relative d-flex align-items-center justify-content-center"
         style={{
           minHeight: "60vh",
-          backgroundImage: "url('/images/contact-hero.jpg')",
+          backgroundImage: "url('images/contact_us.jpg')",
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
@@ -136,7 +123,7 @@ const Contact = () => {
       >
         <div
           className="position-absolute top-0 start-0 w-100 h-100"
-          style={{ backgroundColor: "rgba(0, 41, 75, 0.8)" }}
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.59)" }}
           aria-hidden="true"
         ></div>
 
@@ -393,7 +380,7 @@ const Contact = () => {
               </p>
               <div className="d-flex gap-3 justify-content-center flex-wrap">
                 <a
-                  href="https://wa.me/6283821612483"
+                  href="https://wa.me/6281110119273"
                   className="btn btn-success btn-lg"
                 >
                   <i className="bi bi-whatsapp me-2"></i>

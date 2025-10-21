@@ -226,7 +226,6 @@ const ProgramRegistration = () => {
       "application/pdf",
     ];
 
-    // Validasi khusus untuk foto
     if (fieldName === "photo") {
       if (!file.type.startsWith("image/")) {
         setError("File foto harus berupa gambar (JPG, PNG)");
@@ -279,7 +278,6 @@ const ProgramRegistration = () => {
         fetchCities(value, "ktp");
       }
 
-      // Jika checkbox dicentang, update juga domisili
       if (isSameAsKTP) {
         setFormData((prev) => ({
           ...prev,
@@ -299,7 +297,6 @@ const ProgramRegistration = () => {
         ktp_city_name: selectedCity ? selectedCity.name : "",
       }));
 
-      // Jika checkbox dicentang, update juga domisili
       if (isSameAsKTP) {
         setFormData((prev) => ({
           ...prev,
@@ -313,7 +310,6 @@ const ProgramRegistration = () => {
         ktp_address: value,
       }));
 
-      // Jika checkbox dicentang, update juga domisili
       if (isSameAsKTP) {
         setFormData((prev) => ({
           ...prev,
@@ -355,7 +351,6 @@ const ProgramRegistration = () => {
     setIsSameAsKTP(checked);
 
     if (checked) {
-      // Jika dicentang, salin data KTP ke domisili
       setFormData((prev) => ({
         ...prev,
         domicile_province: prev.ktp_province,
@@ -394,7 +389,6 @@ const ProgramRegistration = () => {
       if (!formData.parent_phone)
         errors.push("Nomor handphone orang tua harus diisi");
 
-      // FIELD BARU: Validasi
       if (!formData.parent_relationship)
         errors.push("Hubungan dengan orang tua/wali harus dipilih");
       if (!formData.major) errors.push("Jurusan harus diisi");
@@ -415,14 +409,12 @@ const ProgramRegistration = () => {
       if (!formData.domicile_address)
         errors.push("Alamat domisili harus diisi");
 
-      // TAMBAH KEMBALI: Validasi foto
       if (!formData.photo_file) errors.push("Foto harus diupload");
     }
 
     if (step === 2) {
       if (!formData.program_id) errors.push("Program harus dipilih");
 
-      // Validasi dokumen tambahan untuk Fast Track
       const selectedProgram = programs.find((p) => p.id == formData.program_id);
       if (selectedProgram?.name?.toLowerCase().includes("fast track")) {
         if (!formData.n4_file)
@@ -453,15 +445,14 @@ const ProgramRegistration = () => {
       setSubmitLoading(true);
       setError("");
 
-      // Upload foto permanen ke server
       let photoPath = null;
       if (formData.photo_file) {
         const photoFormData = new FormData();
         photoFormData.append("file", formData.photo_file);
 
-        console.log("Uploading photo...");
+        // console.log("Uploading photo...");
         const uploadResponse = await axios.post(
-          "/api/uploads/photo", // PERBAIKI ENDPOINT
+          "/api/uploads/photo",
           photoFormData,
           {
             headers: {
@@ -472,13 +463,12 @@ const ProgramRegistration = () => {
 
         if (uploadResponse.data.success) {
           photoPath = uploadResponse.data.data.file_path;
-          console.log("Photo uploaded:", photoPath);
+          // console.log("Photo uploaded:", photoPath);
         } else {
           throw new Error("Gagal mengupload foto");
         }
       }
 
-      // Upload dokumen Fast Track jika ada
       let n4Path = null;
       let sswPath = null;
 
@@ -488,9 +478,9 @@ const ProgramRegistration = () => {
           n4FormData.append("file", formData.n4_file);
           n4FormData.append("type", "n4_certificate");
 
-          console.log("Uploading N4 certificate...");
+          // console.log("Uploading N4 certificate...");
           const n4Response = await axios.post(
-            "/api/uploads/document", // PERBAIKI ENDPOINT
+            "/api/uploads/document",
             n4FormData,
             {
               headers: {
@@ -501,7 +491,7 @@ const ProgramRegistration = () => {
 
           if (n4Response.data.success) {
             n4Path = n4Response.data.data.file_path;
-            console.log("N4 certificate uploaded:", n4Path);
+            // console.log("N4 certificate uploaded:", n4Path);
           } else {
             throw new Error("Gagal mengupload sertifikat N4");
           }
@@ -512,9 +502,9 @@ const ProgramRegistration = () => {
           sswFormData.append("file", formData.ssw_file);
           sswFormData.append("type", "ssw_certificate");
 
-          console.log("Uploading SSW certificate...");
+          // console.log("Uploading SSW certificate...");
           const sswResponse = await axios.post(
-            "/api/uploads/document", // PERBAIKI ENDPOINT
+            "/api/uploads/document",
             sswFormData,
             {
               headers: {
@@ -525,18 +515,16 @@ const ProgramRegistration = () => {
 
           if (sswResponse.data.success) {
             sswPath = sswResponse.data.data.file_path;
-            console.log("SSW certificate uploaded:", sswPath);
+            // console.log("SSW certificate uploaded:", sswPath);
           } else {
             throw new Error("Gagal mengupload sertifikat SSW");
           }
         }
       }
 
-      // Prepare data for backend
       const registrationData = {
         user_id: user.id,
         program_id: formData.program_id,
-        // Data tambahan
         nik: formData.nik,
         gender: formData.gender,
         birth_place: formData.birth_place,
@@ -544,7 +532,6 @@ const ProgramRegistration = () => {
         last_education: formData.last_education,
         parent_phone: formData.parent_phone,
 
-        // FIELD BARU
         parent_relationship: formData.parent_relationship,
         major: formData.major,
         education_institution: formData.education_institution,
@@ -562,21 +549,18 @@ const ProgramRegistration = () => {
         domicile_city_name: formData.domicile_city_name,
         domicile_address: formData.domicile_address,
 
-        // Photo path
         photo_path: photoPath,
 
-        // Dokumen Fast Track
         n4_certificate_path: n4Path,
         ssw_certificate_path: sswPath,
 
-        // Data user untuk update
         user_data: {
           full_name: formData.full_name,
           phone: formData.phone,
         },
       };
 
-      console.log("Sending registration data:", registrationData);
+      // console.log("Sending registration data:", registrationData);
 
       const response = await axios.post("/api/registrations", registrationData);
 
@@ -591,7 +575,7 @@ const ProgramRegistration = () => {
       console.error("Error details:", error.response?.data);
       setError(
         error.response?.data?.message ||
-          "Terjadi kesalahan saat mendaftar. Silakan coba lagi."
+        "Terjadi kesalahan saat mendaftar. Silakan coba lagi."
       );
     } finally {
       setSubmitLoading(false);
@@ -615,7 +599,6 @@ const ProgramRegistration = () => {
     ?.toLowerCase()
     .includes("fast track");
 
-  // Step 1: Data Diri - DENGAN UPLOAD FOTO
   const renderStep1 = () => (
     <div className="row">
       <div className="col-12">
@@ -641,8 +624,7 @@ const ProgramRegistration = () => {
                   required
                 />
                 <div className="form-text">
-                  Format: JPG, PNG (Maksimal 10MB). Foto terbaru dengan latar
-                  belakang polos.
+                  Format: JPG, PNG (Maksimal 10MB)
                 </div>
                 {isUploading("photo") && (
                   <div className="mt-2">
@@ -856,7 +838,7 @@ const ProgramRegistration = () => {
           name="education_institution"
           value={formData.education_institution}
           onChange={handleInputChange}
-          placeholder="Contoh: Universitas Indonesia, SMAN 1 Jakarta, dll."
+          placeholder="Contoh: Universitas Indonesia, SMAN 1 Bandung, dll."
           required
         />
       </div>
@@ -1088,7 +1070,7 @@ const ProgramRegistration = () => {
         >
           <option value="">Pilih Kabupaten/Kota</option>
           {formData.domicile_province &&
-          isCitiesLoading(formData.domicile_province) ? (
+            isCitiesLoading(formData.domicile_province) ? (
             <option value="" disabled>
               Memuat data kabupaten/kota...
             </option>
@@ -1126,7 +1108,6 @@ const ProgramRegistration = () => {
     </div>
   );
 
-  // Step 2: Pemilihan Program dan Dokumen - Radio button dan hapus dokumen umum
   const renderStep2 = () => (
     <div className="row">
       <div className="col-12">
@@ -1296,7 +1277,6 @@ const ProgramRegistration = () => {
     </div>
   );
 
-  // Step 3: Konfirmasi - DENGAN FOTO dan LABEL YANG BENAR
   const renderStep3 = () => (
     <div className="row">
       <div className="col-12">
@@ -1327,7 +1307,6 @@ const ProgramRegistration = () => {
           </div>
         </div>
 
-        {/* Data Diri dengan Field Baru - DENGAN LABEL YANG BENAR */}
         <div className="card mb-3">
           <div className="card-header">
             <h5>Data Diri</h5>
@@ -1361,14 +1340,7 @@ const ProgramRegistration = () => {
                 </p>
               </div>
               <div className="col-md-6">
-                {/* FIELD BARU: Data Tambahan dengan LABEL YANG BENAR */}
-                <p>
-                  <strong>Hubungan dengan Orang Tua/Wali:</strong>{" "}
-                  {getDisplayLabel(
-                    "parent_relationship",
-                    formData.parent_relationship
-                  )}
-                </p>
+
                 <p>
                   <strong>Jurusan:</strong> {formData.major}
                 </p>
@@ -1386,6 +1358,13 @@ const ProgramRegistration = () => {
                 <p>
                   <strong>Status Pernikahan:</strong>{" "}
                   {getDisplayLabel("marital_status", formData.marital_status)}
+                </p>
+                <p>
+                  <strong>Hubungan dengan Orang Tua/Wali:</strong>{" "}
+                  {getDisplayLabel(
+                    "parent_relationship",
+                    formData.parent_relationship
+                  )}
                 </p>
                 <p>
                   <strong>No. HP Orang Tua/Wali:</strong>{" "}
@@ -1518,14 +1497,13 @@ const ProgramRegistration = () => {
           <p className="mb-0">
             Pastikan semua data yang Anda isi sudah benar. Data yang sudah
             dikirim tidak dapat diubah. Setelah mengirim formulir, Anda akan
-            masuk ke proses seleksi.
+            masuk ke proses seleksi interview.
           </p>
         </div>
       </div>
     </div>
   );
 
-  // Success Modal
   const SuccessModal = () => (
     <div
       className={`modal fade ${showSuccessModal ? "show" : ""}`}
@@ -1559,17 +1537,19 @@ const ProgramRegistration = () => {
                 #{registrationResult?.registration_code}
               </h4>
             </div>
-            <p className="text-muted">
-              Silakan lakukan pembayaran untuk melanjutkan proses seleksi.
+            <p className="text-muted text-danger">
+              Untuk informasi dan langkah seleksi lebih lanjut, Anda akan
+              dihubungi melalui WhatsApp pada nomor yang telah didaftarkan.
+              Mohon pastikan nomor WhatsApp Anda aktif.
             </p>
           </div>
           <div className="modal-footer justify-content-center">
             <button
               type="button"
               className="btn btn-primary btn-lg"
-              onClick={() => navigate("/payment")}
+              onClick={() => navigate("/dashboard")}
             >
-              Lakukan Pembayaran
+              Detail program anda
             </button>
           </div>
         </div>
@@ -1596,11 +1576,10 @@ const ProgramRegistration = () => {
                 {[1, 2, 3].map((step) => (
                   <div key={step} className="text-center flex-fill">
                     <div
-                      className={`rounded-circle d-inline-flex align-items-center justify-content-center ${
-                        step <= currentStep
+                      className={`rounded-circle d-inline-flex align-items-center justify-content-center ${step <= currentStep
                           ? "bg-primary text-white"
                           : "bg-light text-muted"
-                      }`}
+                        }`}
                       style={{ width: "40px", height: "40px" }}
                     >
                       {step}

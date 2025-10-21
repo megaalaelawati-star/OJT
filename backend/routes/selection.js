@@ -3,7 +3,6 @@ import db from "../config/database.js";
 
 const router = express.Router();
 
-// Get all selection data with filters
 router.get("/", async (req, res) => {
   try {
     const { program, status, search } = req.query;
@@ -60,12 +59,10 @@ router.get("/", async (req, res) => {
   }
 });
 
-// Update selection status
 router.put("/:registrationId", async (req, res) => {
   try {
     const { status, notes, evaluated_by } = req.body;
 
-    // Check if selection record exists
     const [existing] = await db
       .promise()
       .query("SELECT * FROM selection_status WHERE registration_id = ?", [
@@ -99,7 +96,6 @@ router.put("/:registrationId", async (req, res) => {
   }
 });
 
-// Get selection statistics
 router.get("/statistics", async (req, res) => {
   try {
     const [stats] = await db.promise().query(`
@@ -111,7 +107,6 @@ router.get("/statistics", async (req, res) => {
       FROM selection_status
     `);
 
-    // Get recent evaluations
     const [recentEvaluations] = await db.promise().query(`
       SELECT 
         ss.*,
@@ -142,7 +137,6 @@ router.get("/statistics", async (req, res) => {
   }
 });
 
-// Bulk update selection status
 router.post("/bulk-update", async (req, res) => {
   try {
     const { registration_ids, status, notes, evaluated_by } = req.body;

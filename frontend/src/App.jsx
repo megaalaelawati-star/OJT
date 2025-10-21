@@ -13,65 +13,88 @@ import UserDashboard from "./pages/UserDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import Payment from "./pages/Payment";
 import PaymentManagement from "./pages/PaymentManagement";
-// import SelectionManagement from "./pages/SelectionManagement";
-// import PlacementManagement from "./pages/PlacementManagement";
 import SelectionAndPlacementManagement from "./pages/SelectionAndPlacementManagement";
 import FinancialReports from "./pages/FinancialReports";
 import ProgramManagement from "./pages/ProgramManagement";
+import UserManagement from "./pages/UserManagement";
 import AboutUs from "./pages/AboutUs";
 import Contact from "./pages/Contact";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./App.css";
 
-// Protected Route Component
-const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
+// Component untuk route yang hanya bisa diakses oleh user yang belum login
+const PublicRoute = ({ children }) => {
+  const { isAuthenticated, isAdmin, loading } = useAuth();
 
   if (loading) {
     return (
-      <div className="container mt-5">
-        <div className="d-flex justify-content-center">
-          <div className="spinner-border" role="status">
-            <span className="visually-hidden">Loading...</span>
-          </div>
+      <div className="d-flex justify-content-center align-items-center min-vh-100">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Loading...</span>
         </div>
       </div>
     );
   }
 
-  return isAuthenticated ? children : <Navigate to="/login" />;
+  // Jika sudah login, redirect ke dashboard sesuai role
+  if (isAuthenticated) {
+    if (isAdmin) {
+      return <Navigate to="/admin" replace />;
+    } else {
+      return <Navigate to="/dashboard" replace />;
+    }
+  }
+
+  return children;
 };
 
-// Admin Route Component
+const ProtectedRoute = ({ children }) => {
+  const { isAuthenticated, isParticipant, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="d-flex justify-content-center align-items-center min-vh-100">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Hanya participant yang bisa akses
+  if (!isAuthenticated || !isParticipant) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+};
+
 const AdminRoute = ({ children }) => {
   const { isAuthenticated, isAdmin, loading } = useAuth();
 
   if (loading) {
     return (
-      <div className="container mt-5">
-        <div className="d-flex justify-content-center">
-          <div className="spinner-border" role="status">
-            <span className="visually-hidden">Loading...</span>
-          </div>
+      <div className="d-flex justify-content-center align-items-center min-vh-100">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Loading...</span>
         </div>
       </div>
     );
   }
 
-  return isAuthenticated && isAdmin ? (
-    <AdminLayout>{children}</AdminLayout>
-  ) : isAuthenticated ? (
-    <Navigate to="/dashboard" />
-  ) : (
-    <Navigate to="/login" />
-  );
+  // Hanya admin yang bisa akses
+  if (!isAuthenticated || !isAdmin) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <AdminLayout>{children}</AdminLayout>;
 };
 
 function App() {
   return (
     <AuthProvider>
       <Routes>
-        {/* Public Routes DENGAN Layout */}
+        {/* Public Routes - Bisa diakses semua orang */}
         <Route
           path="/"
           element={
@@ -97,22 +120,6 @@ function App() {
           }
         />
         <Route
-          path="/login"
-          element={
-            <Layout>
-              <Login />
-            </Layout>
-          }
-        />
-        <Route
-          path="/register"
-          element={
-            <Layout>
-              <Register />
-            </Layout>
-          }
-        />
-        <Route
           path="/about-us"
           element={
             <Layout>
@@ -129,9 +136,30 @@ function App() {
           }
         />
 
-        {/* Protected User Routes DENGAN Layout */}
+        {/* Public Routes yang HANYA untuk yang belum login */}
         <Route
-          // path="/program-registration"
+          path="/login"
+          element={
+            <PublicRoute>
+              <Layout>
+                <Login />
+              </Layout>
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            <PublicRoute>
+              <Layout>
+                <Register />
+              </Layout>
+            </PublicRoute>
+          }
+        />
+
+        {/* Protected User Routes - Hanya untuk participant */}
+        <Route
           path="/registration"
           element={
             <ProtectedRoute>
@@ -162,7 +190,7 @@ function App() {
           }
         />
 
-        {/* Admin Routes TANPA Layout (karena sudah ada AdminLayout) */}
+        {/* Admin Routes - Hanya untuk admin */}
         <Route
           path="/admin"
           element={
@@ -179,22 +207,6 @@ function App() {
             </AdminRoute>
           }
         />
-        {/* <Route
-          path="/admin/selection"
-          element={
-            <AdminRoute>
-              <SelectionManagement />
-            </AdminRoute>
-          }
-        />
-        <Route
-          path="/admin/placement"
-          element={
-            <AdminRoute>
-              <PlacementManagement />
-            </AdminRoute>
-          }
-        /> */}
         <Route
           path="/admin/selection-and-placement"
           element={
@@ -219,9 +231,17 @@ function App() {
             </AdminRoute>
           }
         />
+        <Route
+          path="/admin/users"
+          element={
+            <AdminRoute>
+              <UserManagement />
+            </AdminRoute>
+          }
+        />
 
         {/* Catch all route */}
-        <Route path="*" element={<Navigate to="/" />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </AuthProvider>
   );

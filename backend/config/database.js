@@ -8,13 +8,15 @@
 //   host: process.env.DB_HOST || "localhost",
 //   user: process.env.DB_USER || "root",
 //   password: process.env.DB_PASSWORD || "",
-//   database: process.env.DB_NAME || "intern_registration_test",
+//   database: process.env.DB_NAME || "intern_registration",
 //   waitForConnections: true,
 //   connectionLimit: 10,
 //   queueLimit: 0,
 //   charset: "utf8mb4",
 //   timezone: "+07:00", // WIB
 // });
+
+// const promisePool = db.promise();
 
 // // Helper functions
 // export const generateRegistrationCode = async () => {
@@ -43,10 +45,10 @@
 // export const testConnection = async () => {
 //   try {
 //     const [rows] = await db.promise().query("SELECT 1 + 1 AS result");
-//     console.log("✅ Database connection test successful");
+//     console.log("Database connection test successful");
 //     return true;
 //   } catch (error) {
-//     console.error("❌ Database connection test failed:", error);
+//     console.error("Database connection test failed:", error);
 //     return false;
 //   }
 // };
@@ -63,13 +65,16 @@ const db = mysql.createPool({
   host: process.env.DB_HOST || "localhost",
   user: process.env.DB_USER || "root",
   password: process.env.DB_PASSWORD || "",
-  database: process.env.DB_NAME || "intern_registration_test",
+  database: process.env.DB_NAME || "intern_registration",
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
   charset: "utf8mb4",
   timezone: "+07:00", // WIB
 });
+
+// Get promise-based interface
+const promisePool = db.promise();
 
 // Helper functions
 export const generateRegistrationCode = async () => {
@@ -97,13 +102,15 @@ export const generateReceiptNumber = async () => {
 // Test connection function
 export const testConnection = async () => {
   try {
-    const [rows] = await db.promise().query("SELECT 1 + 1 AS result");
-    console.log("✅ Database connection test successful");
+    const [rows] = await promisePool.query("SELECT 1 + 1 AS result");
+    console.log("Database connection test successful");
     return true;
   } catch (error) {
-    console.error("❌ Database connection test failed:", error);
+    console.error("Database connection test failed:", error);
     return false;
   }
 };
 
+// Export both regular and promise pool
+export { promisePool };
 export default db;

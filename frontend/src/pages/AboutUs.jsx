@@ -2,7 +2,6 @@ import React from "react";
 import { Link } from "react-router-dom";
 
 const AboutUs = () => {
-  // Data team members
   const teamMembers = [
     {
       id: 1,
@@ -38,27 +37,21 @@ const AboutUs = () => {
     },
   ];
 
-  // Legal status images
   const legalStatus = [
     {
       id: 1,
-      image: "/images/legal/akta-notaris.jpg",
-      title: "Akta Notaris",
+      image: "images/legalitas/legalitas1.jpg",
+      title: "Legalitas 1",
     },
     {
       id: 2,
-      image: "/images/legal/siup.jpg",
-      title: "SIUP",
+      image: "images/legalitas/legalitas2.jpg",
+      title: "Legalitas 2",
     },
     {
       id: 3,
-      image: "/images/legal/nib.jpg",
-      title: "NIB",
-    },
-    {
-      id: 4,
-      image: "/images/legal/skdp.jpg",
-      title: "SKDP",
+      image: "images/legalitas/legalitas3.jpg",
+      title: "Legalitas 3",
     },
   ];
 
@@ -69,7 +62,7 @@ const AboutUs = () => {
         className="hero-section position-relative d-flex align-items-center justify-content-center"
         style={{
           minHeight: "60vh",
-          backgroundImage: "url('/images/about-hero.jpg')",
+          backgroundImage: "url('/images/about_us.jpg')",
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
@@ -78,7 +71,7 @@ const AboutUs = () => {
       >
         <div
           className="position-absolute top-0 start-0 w-100 h-100"
-          style={{ backgroundColor: "rgba(0, 41, 75, 0.8)" }}
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.59)" }}
           aria-hidden="true"
         ></div>
 
@@ -126,8 +119,8 @@ const AboutUs = () => {
 
             <div className="col-lg-6 mb-4 mb-lg-0">
               <img
-                src="/images/about-desc.jpg"
-                alt="FITALENTA Training Center"
+                src="images/fitalenta_training.jpg"
+                alt="FITALENTA Training"
                 className="img-fluid rounded-3 shadow-custom"
                 style={{ width: "100%", height: "400px", objectFit: "cover" }}
                 onError={(e) => {
@@ -294,7 +287,7 @@ const AboutUs = () => {
 
           <div className="row g-4 justify-content-center">
             {legalStatus.map((legal) => (
-              <div key={legal.id} className="col-md-6 col-lg-3">
+              <div key={legal.id} className="col-md-6 col-lg-4">
                 <div className="card border-0 shadow-sm h-100 hover-shadow text-center">
                   <div className="card-img-top position-relative overflow-hidden">
                     <img
@@ -302,9 +295,10 @@ const AboutUs = () => {
                       alt={legal.title}
                       className="img-fluid"
                       style={{
-                        height: "200px",
+                        height: "380px",
                         width: "100%",
-                        objectFit: "cover",
+                        // objectFit: "cover",
+                        objectFit: "",
                       }}
                       onError={(e) => {
                         e.target.src = `https://placehold.co/300x200/00294B/FFFFFF?text=${encodeURIComponent(

@@ -4,435 +4,157 @@ import db from "../config/database.js";
 const seedData = async () => {
   let connection;
   try {
-    console.log("🌱 Seeding database with initial data...");
+    console.log("Seeding database with initial data...");
 
-    // Test database connection
     connection = db.promise();
     await connection.execute("SELECT 1");
-    console.log("✅ Database connection established");
+    console.log("Database connection established");
 
-    // Hash passwords
     const adminPassword = await bcrypt.hash("admin", 12);
-    const user1Password = await bcrypt.hash("user1", 12);
-    const user2Password = await bcrypt.hash("user2", 12);
-    const user3Password = await bcrypt.hash("user3", 12);
+    const user1Password = await bcrypt.hash("user123", 12);
+    const user2Password = await bcrypt.hash("user321", 12);
 
-    // Clear existing data (optional - comment out if you want to keep existing data)
-    console.log("🧹 Clearing existing data...");
-    await connection.execute("DELETE FROM payments");
+    console.log("Clearing existing data...");
+
+    // Clear data in correct order to avoid foreign key constraints
     await connection.execute("DELETE FROM payment_history");
+    await connection.execute("DELETE FROM payments");
     await connection.execute("DELETE FROM placement_status");
     await connection.execute("DELETE FROM selection_status");
+    await connection.execute("DELETE FROM registration_status_history");
     await connection.execute("DELETE FROM registrations");
+    await connection.execute("DELETE FROM notifications");
     await connection.execute("DELETE FROM programs");
     await connection.execute("DELETE FROM program_categories");
     await connection.execute("DELETE FROM users WHERE id > 0");
 
-    // Reset auto increments
+    // Reset auto increment
     await connection.execute("ALTER TABLE users AUTO_INCREMENT = 1");
-    await connection.execute(
-      "ALTER TABLE program_categories AUTO_INCREMENT = 1"
-    );
+    await connection.execute("ALTER TABLE program_categories AUTO_INCREMENT = 1");
     await connection.execute("ALTER TABLE programs AUTO_INCREMENT = 1");
+    await connection.execute("ALTER TABLE registrations AUTO_INCREMENT = 1");
+    await connection.execute("ALTER TABLE payments AUTO_INCREMENT = 1");
+    await connection.execute("ALTER TABLE selection_status AUTO_INCREMENT = 1");
+    await connection.execute("ALTER TABLE placement_status AUTO_INCREMENT = 1");
+    await connection.execute("ALTER TABLE notifications AUTO_INCREMENT = 1");
+    await connection.execute("ALTER TABLE payment_history AUTO_INCREMENT = 1");
+    await connection.execute("ALTER TABLE registration_status_history AUTO_INCREMENT = 1");
 
     // Insert admin user
     await connection.execute(
       `INSERT INTO users (id, email, password, full_name, user_type) 
        VALUES (?, ?, ?, ?, 'admin')`,
-      [1, "admin@gmail.com", adminPassword, "Administrator"]
+      [1, "admin@gmail.com", adminPassword, "Administrator Fitalenta"]
     );
 
-    // Insert sample users
+    // Insert participant users
     await connection.execute(
       `INSERT INTO users (id, email, password, full_name, phone, address, user_type) VALUES
       (?, ?, ?, ?, ?, ?, 'participant'),
-      (?, ?, ?, ?, ?, ?, 'participant'),
       (?, ?, ?, ?, ?, ?, 'participant')`,
       [
-        2,
-        "user1@gmail.com",
-        user1Password,
-        "User 1",
-        "08882124339",
-        "",
-        3,
-        "user2@gmail.com",
-        user2Password,
-        "User 2",
-        "083821612483",
-        "",
-        4,
-        "user3@gmail.com",
-        user3Password,
-        "User 3",
-        "08333333333",
-        "Jl. User 3",
+        2, "user1@gmail.com", user1Password, "User Satu", "08882124339", "Jl. Contoh No. 123",
+        3, "user2@gmail.com", user2Password, "User Dua", "083821612483", "Jl. Demo No. 456"
       ]
     );
 
     // Insert program categories
     await connection.execute(`
       INSERT INTO program_categories (id, name, description) VALUES
-      (1, 'Regular', 'Program magang di bidang teknologi informasi dan pengembangan software'),
-      (2, 'Hybrid', 'Program magang di bidang analisis data dan machine learning'),
-      (3, 'Fast Track', 'Program magang di bidang pemasaran digital dan media sosial')
+      (1, 'Regular', 'Program persiapan intensif dan komprehensif dengan metode offline'),
+      (2, 'Hybrid', 'Program fleksibel dengan kombinasi pembelajaran virtual dan tatap muka'),
+      (3, 'Fast Track', 'Program jalur cepat untuk yang sudah memiliki sertifikasi')
     `);
 
-    // Data lengkap untuk programs
+    // Insert programs data
     const programsData = [
       {
         id: 1,
         category_id: 1,
         name: "Program Regular",
-        description:
-          "Skema terbaik untuk persiapan intensif dan komprehensif. Dengan metode offline (Tatap Muka)",
-        requirements:
-          "- Mahasiswa TI/S1\n- Menguasai dasar pemrograman\n- Memahami konsep database",
+        description: "Skema terbaik untuk persiapan intensif dan komprehensif.",
+        requirements: "- Ijazah Minimal SMA/Sederajat\n- Sehat Jasmani & Rohani\n- Usia Maksimal 30 Tahun",
         schedule: "Senin-Jumat, 09:00-17:00",
         duration: "4 bulan",
         capacity: 20,
         current_participants: 0,
         status: "active",
-        contact_info:
-          "Email: hr@company.com\nTelp: 021-1234567\nAlamat: Jl. Contoh No. 123",
+        contact_info: "Email: info@fitalenta.co.id\nTelp: 0811 1011 9273\nAlamat: Gedung Science Techno Park ITB. Jl. Ganesa No.15E, Lb. Siliwangi, Kec. Coblong, Bandung 40132",
         registration_deadline: "2024-12-31",
         start_date: "2024-02-01",
         end_date: "2024-04-30",
-        location: "Jakarta, Indonesia & Jepang",
+        location: "Asrama Depok",
         training_cost: "16000000.00",
+        training_fee_details: "Biaya administrasi pendaftaran.\nSeragam pelatihan lengkap.\nModul, buku pelajaran bahasa Jepang, dan materi pendukung lainnya.\nAkses penuh ke fasilitas kelas dan laboratorium bahasa.\nFasilitas asrama (akomodasi dan utilitas dasar selama periode pelatihan).\nPendampingan dan bimbingan belajar intensif.",
         departure_cost: "30000000.00",
+        departure_fee_details: "Tiket pesawat ke Jepang (sekali jalan).\nPengurusan Visa Kerja & dokumen keberangkatan.\nAsuransi perjalanan dan asuransi kesehatan awal di Jepang.\nBiaya penempatan kerja di Jepang (termasuk administrasi penyaluran).\nPendampingan proses keberangkatan hingga penyaluran ke perusahaan di Jepang.",
         installment_plan: "4_installments",
         bridge_fund: "Tersedia (Jaminan dari perusahaan pengirim)",
-        curriculum_json: JSON.stringify([
-          {
-            phase: "Fase 1 Dasar",
-            weeks: [
-              "Minggu 1: Pengenalan Bahasa Jepang (Hiragana & Katakana)",
-              "Minggu 2: Salam dasar, perkenalan diri, dan ungkapan sehari-hari",
-              "Minggu 3: Angka, waktu, tanggal, dan kalimat sederhana",
-              "Minggu 4: Tata bahasa dasar & kosakata untuk aktivitas harian",
-            ],
-          },
-          {
-            phase: "Fase 2 Pengembangan Bahasa",
-            weeks: [
-              "Minggu 5: Pengenalan dan latihan Kanji",
-              "Minggu 6: Pola kalimat untuk bertanya & menjawab",
-              "Minggu 7: Kosakata seputar pekerjaan, makanan, transportasi, dan kesehatan",
-              "Minggu 8: Latihan mendengar & berbicara (role-play & percakapan)",
-            ],
-          },
-          {
-            phase: "Fase 3 Budaya & Persiapan Kerja",
-            weeks: [
-              "Minggu 9: Budaya Jepang, adat istiadat, dan tata krama",
-              "Minggu 10: Etika kerja dan perilaku profesional",
-              "Minggu 11: Keterampilan komunikasi & penyelesaian masalah",
-              "Minggu 12: Simulasi wawancara & skenario dunia kerja",
-            ],
-          },
-          {
-            phase: "Fase 4 Kesiapan Karier & Review Akhir",
-            weeks: [
-              "Minggu 13: Latihan menulis (Kanji dasar & kalimat seputar pekerjaan)",
-              "Minggu 14: Persiapan ujian (Latihan JLPT / NAT Test)",
-              "Minggu 15: Presentasi akhir & simulasi wawancara kerja",
-              "Minggu 16: Review, evaluasi, dan sesi konseling karier",
-            ],
-          },
-        ]),
-        facilities_json: JSON.stringify({
-          dormitory: [
-            "Kamar tidur bersih & nyaman (kapasitas sesuai kebutuhan)",
-            "Tempat tidur, lemari, meja belajar, dan kipas/AC",
-            "Dapur bersama lengkap dengan peralatan memasak",
-            "Kamar mandi dan toilet bersih (laki-laki & perempuan terpisah)",
-            "Ruang makan & ruang santai",
-            "Area olahraga ringan (lapangan kecil / gym sederhana)",
-            "Laundry area (cuci & jemur pakaian)",
-            "Lingkungan aman dengan pengawasan pengelola asrama",
-          ],
-          education: [
-            "Ruang kelas nyaman dengan meja dan kursi belajar",
-            "Perangkat multimedia (proyektor, audio, dan papan tulis)",
-            "Perpustakaan mini dengan buku dan materi bahasa Jepang",
-            "Laboratorium bahasa untuk latihan mendengar dan berbicara",
-            "Area diskusi dan ruang belajar bersama",
-            "Akses internet (Wi-Fi) untuk mendukung pembelajaran",
-          ],
-        }),
-        timeline_json: JSON.stringify([
-          { month: "Bulan 1", title: "Dasar Bahasa & Adaptasi" },
-          { month: "Bulan 2", title: "Pengembangan Bahasa" },
-          { month: "Bulan 3", title: "Budaya & Persiapan Kerja" },
-          { month: "Bulan 4", title: "Persiapan Akhir & Evaluasi" },
-        ]),
-        fee_details_json: JSON.stringify({
-          training_fee_items: [
-            "Biaya administrasi pendaftaran",
-            "Seragam pelatihan",
-            "Modul & buku pelajaran bahasa Jepang",
-            "Akses ke fasilitas kelas & laboratorium bahasa",
-            "Fasilitas asrama (akomodasi & utilitas dasar selama pelatihan)",
-            "Pendampingan & bimbingan belajar",
-          ],
-          departure_fee_items: [
-            "Tiket pesawat ke Jepang",
-            "Visa & dokumen keberangkatan",
-            "Asuransi perjalanan & kesehatan",
-            "Biaya penempatan kerja di Jepang",
-            "Pendampingan proses keberangkatan hingga penyaluran",
-          ],
-        }),
-        requirements_list: JSON.stringify([
-          "Usia minimal 18 tahun",
-          "Pendidikan minimal SMA/SMK sederajat",
-          "Sehat jasmani & rohani (dibuktikan dengan surat keterangan sehat)",
-          "Tidak memiliki catatan kriminal (SKCK)",
-          "Memiliki laptop/komputer pribadi",
-          "Dasar pemahaman komputer (tidak perlu pengalaman coding)",
-          "Bersedia mengikuti seluruh rangkaian pelatihan hingga selesai",
-        ]),
+        timeline_text: "Bulan 1: Pelatihan Dasar Bahasa Jepang (Hiragana & Katakana)\nBulan 2: Pengembangan Kosakata dan Tata Bahasa\nBulan 3: Budaya Jepang dan Etika Kerja\nBulan 4: Persiapan Akhir dan Evaluasi",
+        requirements_text: "Minimal 18 tahun dan Maksimal 30 Tahun.\nMinimal Ijazah SMA/SMK Sederajat.\nSehat Jasmani & Rohani (Wajib dibuktikan dengan Surat Keterangan Sehat dari fasilitas kesehatan).\nTidak memiliki catatan kriminal (Wajib melampirkan Surat Keterangan Catatan Kepolisian/SKCK).\nBersedia mengikuti seluruh rangkaian pelatihan dan aturan asrama hingga selesai."
       },
       {
         id: 2,
         category_id: 2,
         name: "Program Hybrid",
-        description:
-          "Fleksibilitas pelatihan. Dengan metode offline (Tatap Muka) pemantapan di asrama dan online (Virtual)",
-        requirements:
-          "- Mahasiswa TI/DKV\n- Menguasai HTML, CSS, JavaScript\n- Pengalaman dengan framework frontend",
+        description: "Fleksibilitas pelatihan virtual dengan pemantapan di asrama.",
+        requirements: "- Ijazah Minimal SMA/Sederajat\n- Sehat Jasmani & Rohani\n- Usia Maksimal 30 Tahun",
         schedule: "Senin-Jumat, 09:00-17:00",
         duration: "6 bulan",
         capacity: 15,
         current_participants: 0,
         status: "active",
-        contact_info:
-          "Email: hr@company.com\nTelp: 021-1234567\nAlamat: Jl. Contoh No. 123",
+        contact_info: "Email: info@fitalenta.co.id\nTelp: 0811 1011 9273\nAlamat: Gedung Science Techno Park ITB. Jl. Ganesa No.15E, Lb. Siliwangi, Kec. Coblong, Bandung 40132",
         registration_deadline: "2024-12-31",
         start_date: "2024-02-01",
         end_date: "2024-04-30",
-        location: "Jakarta, Indonesia & Jepang",
+        location: "-",
         training_cost: "7150000.00",
+        training_fee_details: "Biaya administrasi pendaftaran.\nAkses ke platform pembelajaran virtual (LMS).\nModul & buku pelajaran digital bahasa Jepang. \nSesi live interaction & bimbingan virtual.\nFasilitas asrama (akomodasi & utilitas dasar) selama 1 bulan pemantapan luring.\nPendampingan & bimbingan belajar.",
         departure_cost: "30000000.00",
+        departure_fee_details: "Tiket pesawat ke Jepang Visa & dokumen keberangkatan \nAsuransi perjalanan & kesehatan \nBiaya penempatan kerja di Jepang\nPendampingan proses keberangkatan hingga penyaluran",
         installment_plan: "6_installments",
         bridge_fund: "Tersedia (Jaminan dari perusahaan pengirim)",
-        curriculum_json: JSON.stringify([
-          {
-            phase: "Fase 1 Dasar",
-            weeks: [
-              "Minggu 1: Pengenalan Bahasa Jepang (Hiragana & Katakana)",
-              "Minggu 2: Salam dasar, perkenalan diri, dan ungkapan sehari-hari",
-              "Minggu 3: Angka, waktu, tanggal, dan kalimat sederhana",
-              "Minggu 4: Tata bahasa dasar & kosakata untuk aktivitas harian",
-            ],
-          },
-          {
-            phase: "Fase 2 Pengembangan Bahasa",
-            weeks: [
-              "Minggu 5: Pengenalan dan latihan Kanji",
-              "Minggu 6: Pola kalimat untuk bertanya & menjawab",
-              "Minggu 7: Kosakata seputar pekerjaan, makanan, transportasi, dan kesehatan",
-              "Minggu 8: Latihan mendengar & berbicara (role-play & percakapan)",
-            ],
-          },
-          {
-            phase: "Fase 3 Budaya & Persiapan Kerja",
-            weeks: [
-              "Minggu 9: Budaya Jepang, adat istiadat, dan tata krama",
-              "Minggu 10: Etika kerja dan perilaku profesional",
-              "Minggu 11: Keterampilan komunikasi & penyelesaian masalah",
-              "Minggu 12: Simulasi wawancara & skenario dunia kerja",
-            ],
-          },
-          {
-            phase: "Fase 4 Kesiapan Karier & Review Akhir",
-            weeks: [
-              "Minggu 13: Latihan menulis (Kanji dasar & kalimat seputar pekerjaan)",
-              "Minggu 14: Persiapan ujian (Latihan JLPT / NAT Test)",
-              "Minggu 15: Presentasi akhir & simulasi wawancara kerja",
-              "Minggu 16: Review, evaluasi, dan sesi konseling karier",
-            ],
-          },
-        ]),
-        facilities_json: JSON.stringify({
-          dormitory: [
-            "Kamar tidur bersih & nyaman (kapasitas sesuai kebutuhan)",
-            "Tempat tidur, lemari, meja belajar, dan kipas/AC",
-            "Dapur bersama lengkap dengan peralatan memasak",
-            "Kamar mandi dan toilet bersih (laki-laki & perempuan terpisah)",
-            "Ruang makan & ruang santai",
-            "Area olahraga ringan (lapangan kecil / gym sederhana)",
-            "Laundry area (cuci & jemur pakaian)",
-            "Lingkungan aman dengan pengawasan pengelola asrama",
-          ],
-          education: [
-            "Ruang kelas nyaman dengan meja dan kursi belajar",
-            "Perangkat multimedia (proyektor, audio, dan papan tulis)",
-            "Perpustakaan mini dengan buku dan materi bahasa Jepang",
-            "Laboratorium bahasa untuk latihan mendengar dan berbicara",
-            "Area diskusi dan ruang belajar bersama",
-            "Akses internet (Wi-Fi) untuk mendukung pembelajaran",
-          ],
-        }),
-        timeline_json: JSON.stringify([
-          { month: "Bulan 1", title: "Dasar Bahasa & Adaptasi" },
-          { month: "Bulan 2", title: "Pengembangan Bahasa" },
-          { month: "Bulan 3", title: "Budaya & Persiapan Kerja" },
-          { month: "Bulan 4", title: "Persiapan Akhir & Evaluasi" },
-        ]),
-        fee_details_json: JSON.stringify({
-          training_fee_items: [
-            "Biaya administrasi pendaftaran",
-            "Seragam pelatihan",
-            "Modul & buku pelajaran bahasa Jepang",
-            "Akses ke fasilitas kelas & laboratorium bahasa",
-            "Fasilitas asrama (akomodasi & utilitas dasar selama pelatihan)",
-            "Pendampingan & bimbingan belajar",
-          ],
-          departure_fee_items: [
-            "Tiket pesawat ke Jepang",
-            "Visa & dokumen keberangkatan",
-            "Asuransi perjalanan & kesehatan",
-            "Biaya penempatan kerja di Jepang",
-            "Pendampingan proses keberangkatan hingga penyaluran",
-          ],
-        }),
-        requirements_list: JSON.stringify([
-          "Usia minimal 18 tahun",
-          "Pendidikan minimal SMA/SMK sederajat",
-          "Sehat jasmani & rohani (dibuktikan dengan surat keterangan sehat)",
-          "Tidak memiliki catatan kriminal (SKCK)",
-          "Memiliki laptop/komputer pribadi",
-          "Dasar pemahaman komputer (tidak perlu pengalaman coding)",
-          "Bersedia mengikuti seluruh rangkaian pelatihan hingga selesai",
-        ]),
+        timeline_text: "Minggu 1-6: Pelatihan Dasar Bahasa Jepang (Virtual: Penguasaan Hiragana & Katakana).\nMinggu 7-12: Pengembangan Kosakata dan Tata Bahasa Lanjutan (Virtual: Fokus N5 dan Komunikasi Dasar).\nMinggu 13-20: Bahasa Lanjutan, Evaluasi Virtual, dan Persiapan Administratif (Virtual: Fokus N4, Self-Study, dan Pre-screening dokumen penempatan).\nMinggu 21-24: Pemantapan Budaya, Kesiapan Fisik/Mental, dan Penyaluran (Luring di Asrama: Etika Kerja, Simulasi Wawancara, Ujian Akhir, dan Proses Keberangkatan).",
+        requirements_text: "Minimal 18 tahun dan Maksimal 30 Tahun.\nMinimal Ijazah SMA/SMK Sederajat.\nSehat Jasmani & Rohani (Wajib dibuktikan dengan Surat Keterangan Sehat dari fasilitas kesehatan).\nTidak memiliki catatan kriminal (Wajib melampirkan Surat Keterangan Catatan Kepolisian/SKCK).\nBersedia mengikuti seluruh rangkaian pelatihan dan aturan asrama hingga selesai."
       },
       {
         id: 3,
         category_id: 3,
         name: "Program Fast Track",
-        description:
-          "Jalur cepat untuk yang sudah memiliki sertifikat Noryoku Shiken N4 dan Specified Skilled Worker",
-        requirements:
-          "- Mahasiswa Statistika/TI/Matematika\n- Menguasai dasar statistik\n- Familiar dengan Python/R",
+        description: "Jalur cepat untuk yang sudah memiliki sertifikat Noryoku Shiken N4 dan Specified Skilled Worker",
+        requirements: "- Mahasiswa Statistika/TI/Matematika\n- Menguasai dasar statistik\n- Familiar dengan Python/R",
         schedule: "Senin-Jumat, 09:00-17:00",
         duration: "1 bulan",
         capacity: 12,
         current_participants: 0,
         status: "active",
-        contact_info:
-          "Email: hr@company.com\nTelp: 021-1234567\nAlamat: Jl. Contoh No. 123",
+        contact_info: "Email: info@fitalenta.co.id\nTelp: 0811 1011 9273\nAlamat: Gedung Science Techno Park ITB. Jl. Ganesa No.15E, Lb. Siliwangi, Kec. Coblong, Bandung 40132",
         registration_deadline: "2024-12-31",
         start_date: "2024-02-01",
         end_date: "2024-05-31",
         location: "Jakarta, Indonesia & Jepang",
         training_cost: "4000000.00",
+        training_fee_details: "Biaya administrasi dan pendaftaran\nVerifikasi sertifikat N4 / Sertifikat Keahlian (SSW)\nOrientasi budaya kerja dan etika bisnis (1 bulan) \nKonsultasi persiapan keberangkatan dan wawancara \nAkses ke fasilitas kelas/ruangan briefing",
         departure_cost: "30000000.00",
+        departure_fee_details: "Tiket pesawat ke Jepang Visa dan dokumen keberangkatan \nAsuransi perjalanan dan kesehatan awal\nBiaya penempatan kerja di Jepang\nProcessing fee administrasi penyaluran",
         installment_plan: "none",
         bridge_fund: "Tersedia (Jaminan dari perusahaan pengirim)",
-        curriculum_json: JSON.stringify([
-          {
-            phase: "Fase 1 Dasar",
-            weeks: [
-              "Minggu 1: Pengenalan Bahasa Jepang (Hiragana & Katakana)",
-              "Minggu 2: Salam dasar, perkenalan diri, dan ungkapan sehari-hari",
-              "Minggu 3: Angka, waktu, tanggal, dan kalimat sederhana",
-              "Minggu 4: Tata bahasa dasar & kosakata untuk aktivitas harian",
-            ],
-          },
-          {
-            phase: "Fase 2 Pengembangan Bahasa",
-            weeks: [
-              "Minggu 5: Pengenalan dan latihan Kanji",
-              "Minggu 6: Pola kalimat untuk bertanya & menjawab",
-              "Minggu 7: Kosakata seputar pekerjaan, makanan, transportasi, dan kesehatan",
-              "Minggu 8: Latihan mendengar & berbicara (role-play & percakapan)",
-            ],
-          },
-          {
-            phase: "Fase 3 Budaya & Persiapan Kerja",
-            weeks: [
-              "Minggu 9: Budaya Jepang, adat istiadat, dan tata krama",
-              "Minggu 10: Etika kerja dan perilaku profesional",
-              "Minggu 11: Keterampilan komunikasi & penyelesaian masalah",
-              "Minggu 12: Simulasi wawancara & skenario dunia kerja",
-            ],
-          },
-          {
-            phase: "Fase 4 Kesiapan Karier & Review Akhir",
-            weeks: [
-              "Minggu 13: Latihan menulis (Kanji dasar & kalimat seputar pekerjaan)",
-              "Minggu 14: Persiapan ujian (Latihan JLPT / NAT Test)",
-              "Minggu 15: Presentasi akhir & simulasi wawancara kerja",
-              "Minggu 16: Review, evaluasi, dan sesi konseling karier",
-            ],
-          },
-        ]),
-        facilities_json: JSON.stringify({
-          dormitory: [
-            "Kamar tidur bersih & nyaman (kapasitas sesuai kebutuhan)",
-            "Tempat tidur, lemari, meja belajar, dan kipas/AC",
-            "Dapur bersama lengkap dengan peralatan memasak",
-            "Kamar mandi dan toilet bersih (laki-laki & perempuan terpisah)",
-            "Ruang makan & ruang santai",
-            "Area olahraga ringan (lapangan kecil / gym sederhana)",
-            "Laundry area (cuci & jemur pakaian)",
-            "Lingkungan aman dengan pengawasan pengelola asrama",
-          ],
-          education: [
-            "Ruang kelas nyaman dengan meja dan kursi belajar",
-            "Perangkat multimedia (proyektor, audio, dan papan tulis)",
-            "Perpustakaan mini dengan buku dan materi bahasa Jepang",
-            "Laboratorium bahasa untuk latihan mendengar dan berbicara",
-            "Area diskusi dan ruang belajar bersama",
-            "Akses internet (Wi-Fi) untuk mendukung pembelajaran",
-          ],
-        }),
-        timeline_json: JSON.stringify([
-          { month: "Bulan 1", title: "Dasar Bahasa & Adaptasi" },
-          { month: "Bulan 2", title: "Pengembangan Bahasa" },
-          { month: "Bulan 3", title: "Budaya & Persiapan Kerja" },
-          { month: "Bulan 4", title: "Persiapan Akhir & Evaluasi" },
-        ]),
-        fee_details_json: JSON.stringify({
-          training_fee_items: [
-            "Biaya administrasi pendaftaran",
-            "Seragam pelatihan",
-            "Modul & buku pelajaran bahasa Jepang",
-            "Akses ke fasilitas kelas & laboratorium bahasa",
-            "Fasilitas asrama (akomodasi & utilitas dasar selama pelatihan)",
-            "Pendampingan & bimbingan belajar",
-          ],
-          departure_fee_items: [
-            "Tiket pesawat ke Jepang",
-            "Visa & dokumen keberangkatan",
-            "Asuransi perjalanan & kesehatan",
-            "Biaya penempatan kerja di Jepang",
-            "Pendampingan proses keberangkatan hingga penyaluran",
-          ],
-        }),
-        requirements_list: JSON.stringify([
-          "Usia minimal 18 tahun",
-          "Pendidikan minimal SMA/SMK sederajat",
-          "Sehat jasmani & rohani (dibuktikan dengan surat keterangan sehat)",
-          "Tidak memiliki catatan kriminal (SKCK)",
-          "Memiliki laptop/komputer pribadi",
-          "Dasar pemahaman komputer (tidak perlu pengalaman coding)",
-          "Bersedia mengikuti seluruh rangkaian pelatihan hingga selesai",
-        ]),
-      },
+        timeline_text: "Minggu 1: Verifikasi Dokumen, Sertifikat N4/SSW, dan Keahlian Teknis \nMinggu 2: Orientasi Budaya Kerja, Etika Jepang (Horenso), dan Simulasi Wawancara \nMinggu 3: Pengurusan Dokumen Administrasi Keberangkatan dan Visa\nMinggu 4: Briefing Akhir, Matching Perusahaan, dan Pemberangkatan",
+        requirements_text: "Memiliki sertifikat Noryoku Shiken N4\nMemiliki sertifikat Specified Skilled Worker (SSW)\nMinimal 18 tahun dan Maksimal 30 Tahun.\nMinimal Ijazah SMA/SMK Sederajat.\nSehat Jasmani & Rohani (Wajib dibuktikan dengan Surat Keterangan Sehat dari fasilitas kesehatan).\nTidak memiliki catatan kriminal (Wajib melampirkan Surat Keterangan Catatan Kepolisian/SKCK).\nBersedia mengikuti seluruh rangkaian pelatihan dan aturan asrama hingga selesai."
+      }
     ];
 
-    // Insert semua program
+    // Insert each program
     for (const program of programsData) {
       await connection.execute(
         `INSERT INTO programs (
           id, category_id, name, description, requirements, schedule, duration, 
           capacity, current_participants, status, contact_info, registration_deadline, 
-          start_date, end_date, location, training_cost, departure_cost, installment_plan, 
-          bridge_fund, curriculum_json, facilities_json, timeline_json, fee_details_json, requirements_list
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          start_date, end_date, location, training_cost, training_fee_details, 
+          departure_cost, departure_fee_details, installment_plan, bridge_fund, 
+          timeline_text, requirements_text
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           program.id,
           program.category_id,
@@ -450,24 +172,58 @@ const seedData = async () => {
           program.end_date,
           program.location,
           program.training_cost,
+          program.training_fee_details,
           program.departure_cost,
+          program.departure_fee_details,
           program.installment_plan,
           program.bridge_fund,
-          program.curriculum_json,
-          program.facilities_json,
-          program.timeline_json,
-          program.fee_details_json,
-          program.requirements_list,
+          program.timeline_text,
+          program.requirements_text
         ]
       );
     }
 
-    console.log("✅ Database seeded successfully!");
-    console.log("📋 Login credentials:");
-    console.log("   Admin: admin@gmail.com / admin");
-    console.log("   User 1: user1@gmail.com / user1");
-    console.log("   User 2: user2@gmail.com / user2");
-    console.log("   User 3: user3@gmail.com / user3");
+    // Create sample registration for user 1
+    const registrationCode = `REG-${Date.now().toString().slice(-6)}-${Math.random().toString(36).substring(2, 5).toUpperCase()}`;
+
+    await connection.execute(
+      `INSERT INTO registrations (
+        user_id, program_id, registration_status, registration_code,
+        nik, gender, birth_place, birth_date, last_education, major,
+        education_institution, current_activity, marital_status,
+        parent_phone, parent_relationship, ktp_address, domicile_address
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        2, // user_id for user1
+        1, // program_id for Program Regular
+        'menunggu',
+        registrationCode,
+        '1234567890123456',
+        'L',
+        'Jakarta',
+        '2000-01-15',
+        'SMA',
+        'IPA',
+        'SMA Negeri 1 Jakarta',
+        'Pelajar/Mahasiswa',
+        'Belum Menikah',
+        '081234567890',
+        'Orang Tua',
+        'Jl. KTP Contoh No. 123, Jakarta',
+        'Jl. Domisili Contoh No. 456, Jakarta'
+      ]
+    );
+
+    console.log("Database seeded successfully!");
+    console.log("\n=== Login Credentials ===");
+    console.log("Admin: admin@gmail.com / admin");
+    console.log("User 1: user1@gmail.com / user123");
+    console.log("User 2: user2@gmail.com / user321");
+    console.log("\n=== Sample Data Created ===");
+    console.log("- 3 Program Categories");
+    console.log("- 3 Programs (Regular, Hybrid, Fast Track)");
+    console.log("- 1 Sample Registration for User 1");
+    console.log("===========================");
 
     process.exit(0);
   } catch (error) {
@@ -476,7 +232,6 @@ const seedData = async () => {
   }
 };
 
-// Handle uncaught errors
 process.on("unhandledRejection", (err) => {
   console.error("❌ Unhandled Promise Rejection:", err);
   process.exit(1);

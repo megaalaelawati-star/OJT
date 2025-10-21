@@ -13,7 +13,6 @@ const ProgramManagement = () => {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
 
-  // Form state
   const [formData, setFormData] = useState({
     category_id: "",
     name: "",
@@ -24,20 +23,15 @@ const ProgramManagement = () => {
     capacity: "",
     contact_info: "",
     status: "active",
-    location: "Jakarta, Indonesia & Jepang",
+    location: "Bandung, Indonesia & Jepang",
     training_cost: "",
     departure_cost: "",
     installment_plan: "none",
     bridge_fund: "Tersedia (Jaminan dari perusahaan pengirim)",
-    curriculum_json: JSON.stringify([{ phase: "", weeks: [] }], null, 2),
-    facilities_json: JSON.stringify({ education: [], dormitory: [] }, null, 2),
-    timeline_json: JSON.stringify([], null, 2),
-    fee_details_json: JSON.stringify(
-      { training_fee_items: [], departure_fee_items: [] },
-      null,
-      2
-    ),
-    requirements_list: JSON.stringify([], null, 2),
+    timeline_text: "",
+    training_fee_details: "",
+    departure_fee_details: "",
+    requirements_text: "",
   });
 
   useEffect(() => {
@@ -75,7 +69,6 @@ const ProgramManagement = () => {
 
   const handleShowModal = (program = null) => {
     if (program) {
-      // Edit mode
       setEditingProgram(program);
       setFormData({
         category_id: program.category_id || "",
@@ -87,42 +80,18 @@ const ProgramManagement = () => {
         capacity: program.capacity || "",
         contact_info: program.contact_info || "",
         status: program.status || "active",
-        location: program.location || "Jakarta, Indonesia & Jepang",
+        location: program.location || "Bandung, Indonesia & Jepang",
         training_cost: program.training_cost || "",
         departure_cost: program.departure_cost || "",
         installment_plan: program.installment_plan || "none",
         bridge_fund:
           program.bridge_fund || "Tersedia (Jaminan dari perusahaan pengirim)",
-        curriculum_json:
-          typeof program.curriculum_json === "object"
-            ? JSON.stringify(program.curriculum_json, null, 2)
-            : program.curriculum_json ||
-              JSON.stringify([{ phase: "", weeks: [] }], null, 2),
-        facilities_json:
-          typeof program.facilities_json === "object"
-            ? JSON.stringify(program.facilities_json, null, 2)
-            : program.facilities_json ||
-              JSON.stringify({ education: [], dormitory: [] }, null, 2),
-        timeline_json:
-          typeof program.timeline_json === "object"
-            ? JSON.stringify(program.timeline_json, null, 2)
-            : program.timeline_json || JSON.stringify([], null, 2),
-        fee_details_json:
-          typeof program.fee_details_json === "object"
-            ? JSON.stringify(program.fee_details_json, null, 2)
-            : program.fee_details_json ||
-              JSON.stringify(
-                { training_fee_items: [], departure_fee_items: [] },
-                null,
-                2
-              ),
-        requirements_list:
-          typeof program.requirements_list === "object"
-            ? JSON.stringify(program.requirements_list, null, 2)
-            : program.requirements_list || JSON.stringify([], null, 2),
+        timeline_text: program.timeline_text || "",
+        training_fee_details: program.training_fee_details || "",
+        departure_fee_details: program.departure_fee_details || "",
+        requirements_text: program.requirements_text || "",
       });
     } else {
-      // Add mode
       setEditingProgram(null);
       setFormData({
         category_id: "",
@@ -134,24 +103,15 @@ const ProgramManagement = () => {
         capacity: "",
         contact_info: "",
         status: "active",
-        location: "Jakarta, Indonesia & Jepang",
+        location: "Bandung, Indonesia & Jepang",
         training_cost: "",
         departure_cost: "",
         installment_plan: "none",
         bridge_fund: "Tersedia (Jaminan dari perusahaan pengirim)",
-        curriculum_json: JSON.stringify([{ phase: "", weeks: [] }], null, 2),
-        facilities_json: JSON.stringify(
-          { education: [], dormitory: [] },
-          null,
-          2
-        ),
-        timeline_json: JSON.stringify([], null, 2),
-        fee_details_json: JSON.stringify(
-          { training_fee_items: [], departure_fee_items: [] },
-          null,
-          2
-        ),
-        requirements_list: JSON.stringify([], null, 2),
+        timeline_text: "",
+        training_fee_details: "",
+        departure_fee_details: "",
+        requirements_text: "",
       });
     }
     setShowModal(true);
@@ -175,29 +135,13 @@ const ProgramManagement = () => {
     setSaving(true);
 
     try {
-      // Validasi JSON fields
-      const jsonFields = [
-        "curriculum_json",
-        "facilities_json",
-        "timeline_json",
-        "fee_details_json",
-        "requirements_list",
-      ];
-      for (let field of jsonFields) {
-        if (formData[field]) {
-          JSON.parse(formData[field]);
-        }
-      }
-
       if (editingProgram) {
-        // Update program
         await axios.put(`/api/programs/${editingProgram.id}`, formData);
         setMessage({
           type: "success",
           text: "Program berhasil diperbarui",
         });
       } else {
-        // Create new program - kita perlu buat endpoint POST /api/programs
         await axios.post("/api/programs", formData);
         setMessage({
           type: "success",
@@ -206,7 +150,7 @@ const ProgramManagement = () => {
       }
 
       setShowModal(false);
-      fetchPrograms(); // Refresh list
+      fetchPrograms();
     } catch (error) {
       console.error("Error saving program:", error);
       setMessage({
@@ -231,7 +175,7 @@ const ProgramManagement = () => {
         type: "success",
         text: "Program berhasil dihapus",
       });
-      fetchPrograms(); // Refresh list
+      fetchPrograms();
     } catch (error) {
       console.error("Error deleting program:", error);
       setMessage({
@@ -277,19 +221,27 @@ const ProgramManagement = () => {
   return (
     <div className="container mt-4">
       {/* Header */}
-      <div className="row mb-4">
-        <div className="col">
+      <div className="d-flex justify-content-between align-items-center mb-4 ">
+        <div>
           <h2>Manajemen Program</h2>
           <p className="text-muted">Kelola program magang yang tersedia</p>
+        </div>
+        <div>
+          <button
+            className="btn btn-primary"
+            onClick={() => handleShowModal()}
+          >
+            <i className="bi bi-plus-circle me-2"></i>
+            Tambah Program
+          </button>
         </div>
       </div>
 
       {/* Alert Message */}
       {message.text && (
         <div
-          className={`alert alert-${
-            message.type === "error" ? "danger" : "success"
-          } alert-dismissible fade show`}
+          className={`alert alert-${message.type === "error" ? "danger" : "success"
+            } alert-dismissible fade show`}
           role="alert"
         >
           {message.text}
@@ -307,13 +259,7 @@ const ProgramManagement = () => {
           <div className="card">
             <div className="card-header d-flex justify-content-between align-items-center">
               <h5 className="mb-0">Daftar Program</h5>
-              <button
-                className="btn btn-primary"
-                onClick={() => handleShowModal()}
-              >
-                <i className="bi bi-plus-circle me-2"></i>
-                Tambah Program
-              </button>
+
             </div>
             <div className="card-body">
               {error && (
@@ -376,14 +322,14 @@ const ProgramManagement = () => {
                           <td>
                             <div className="btn-group btn-group-sm">
                               <button
-                                className="btn btn-outline-primary"
+                                className="btn btn-outline-primary me-1"
                                 onClick={() => handleShowModal(program)}
                                 title="Edit Program"
                               >
                                 <i className="bi bi-pencil"></i>
                               </button>
                               <button
-                                className="btn btn-outline-primary"
+                                className="btn btn-outline-danger"
                                 onClick={() => handleDelete(program.id)}
                                 title="Hapus Program"
                               >
@@ -627,101 +573,88 @@ const ProgramManagement = () => {
                     />
                   </div>
 
-                  {/* JSON Fields */}
+                  {/* Timeline Text */}
                   <div className="row">
                     <div className="col-12">
                       <div className="mb-3">
-                        <label className="form-label">Kurikulum (JSON)</label>
+                        <label className="form-label">Timeline Program</label>
                         <textarea
-                          className="form-control font-monospace small"
-                          rows="6"
-                          name="curriculum_json"
-                          value={formData.curriculum_json}
-                          onChange={handleChange}
-                          placeholder='[{"phase": "Fase 1", "weeks": ["Minggu 1: ...", "Minggu 2: ..."]}]'
-                        />
-                        <div className="form-text">
-                          Format JSON untuk struktur kurikulum program
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="row">
-                    <div className="col-12">
-                      <div className="mb-3">
-                        <label className="form-label">Fasilitas (JSON)</label>
-                        <textarea
-                          className="form-control font-monospace small"
-                          rows="6"
-                          name="facilities_json"
-                          value={formData.facilities_json}
-                          onChange={handleChange}
-                          placeholder='{"education": ["Fasilitas 1", "Fasilitas 2"], "dormitory": ["Fasilitas 1", "Fasilitas 2"]}'
-                        />
-                        <div className="form-text">
-                          Format JSON untuk fasilitas pendidikan dan asrama
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="row">
-                    <div className="col-12">
-                      <div className="mb-3">
-                        <label className="form-label">Timeline (JSON)</label>
-                        <textarea
-                          className="form-control font-monospace small"
+                          className="form-control"
                           rows="4"
-                          name="timeline_json"
-                          value={formData.timeline_json}
+                          name="timeline_text"
+                          value={formData.timeline_text}
                           onChange={handleChange}
-                          placeholder='[{"month": "Bulan 1", "title": "Judul Fase"}]'
+                          placeholder="Masukkan timeline program, pisahkan dengan baris baru&#10;Contoh:&#10;Bulan 1: Pelatihan Dasar&#10;Bulan 2: Pelatihan Lanjutan&#10;Bulan 3: Persiapan Keberangkatan"
                         />
                         <div className="form-text">
-                          Format JSON untuk timeline program
+                          Masukkan timeline program dengan format teks biasa,
+                          pisahkan setiap fase dengan baris baru
                         </div>
                       </div>
                     </div>
                   </div>
 
+                  {/* Training Fee Details */}
                   <div className="row">
                     <div className="col-12">
                       <div className="mb-3">
                         <label className="form-label">
-                          Detail Biaya (JSON)
+                          Detail Biaya Pelatihan
                         </label>
                         <textarea
-                          className="form-control font-monospace small"
+                          className="form-control"
                           rows="4"
-                          name="fee_details_json"
-                          value={formData.fee_details_json}
+                          name="training_fee_details"
+                          value={formData.training_fee_details}
                           onChange={handleChange}
-                          placeholder='{"training_fee_items": ["Item 1", "Item 2"], "departure_fee_items": ["Item 1", "Item 2"]}'
+                          placeholder="Masukkan detail biaya pelatihan, pisahkan dengan baris baru&#10;Contoh:&#10; Biaya administrasi&#10; Modul pembelajaran&#10; Seragam&#10; Asrama"
                         />
                         <div className="form-text">
-                          Format JSON untuk detail item biaya
+                          Masukkan detail item biaya pelatihan
                         </div>
                       </div>
                     </div>
                   </div>
 
+                  {/* Departure Fee Details */}
                   <div className="row">
                     <div className="col-12">
                       <div className="mb-3">
                         <label className="form-label">
-                          Daftar Persyaratan (JSON)
+                          Detail Biaya Keberangkatan
                         </label>
                         <textarea
-                          className="form-control font-monospace small"
+                          className="form-control"
                           rows="4"
-                          name="requirements_list"
-                          value={formData.requirements_list}
+                          name="departure_fee_details"
+                          value={formData.departure_fee_details}
                           onChange={handleChange}
-                          placeholder='["Persyaratan 1", "Persyaratan 2", "Persyaratan 3"]'
+                          placeholder="Masukkan detail biaya keberangkatan, pisahkan dengan baris baru&#10;Contoh:&#10; Tiket pesawat&#10; Visa & dokumen&#10; Asuransi&#10; Biaya penempatan"
                         />
                         <div className="form-text">
-                          Format JSON untuk daftar persyaratan peserta
+                          Masukkan detail item biaya keberangkatan
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Requirements Text */}
+                  <div className="row">
+                    <div className="col-12">
+                      <div className="mb-3">
+                        <label className="form-label">
+                          Daftar Persyaratan Peserta
+                        </label>
+                        <textarea
+                          className="form-control"
+                          rows="4"
+                          name="requirements_text"
+                          value={formData.requirements_text}
+                          onChange={handleChange}
+                          placeholder="Masukkan persyaratan peserta, pisahkan dengan baris baru&#10;Contoh:&#10; Usia minimal 18 tahun&#10; Pendidikan minimal SMA&#10; Sehat jasmani dan rohani"
+                        />
+                        <div className="form-text">
+                          Masukkan daftar persyaratan peserta, pisahkan setiap persyaratan dengan baris baru
                         </div>
                       </div>
                     </div>

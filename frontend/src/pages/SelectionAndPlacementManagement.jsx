@@ -13,7 +13,6 @@ const SelectionAndPlacementManagement = () => {
     search: "",
   });
 
-  // Modal states
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedRegistration, setSelectedRegistration] = useState(null);
   const [formData, setFormData] = useState({
@@ -31,12 +30,10 @@ const SelectionAndPlacementManagement = () => {
     fetchRegistrations();
   }, [filters]);
 
-  // Fetch registrations with selection and placement data
   const fetchRegistrations = async () => {
     try {
       setLoading(true);
 
-      // Since we need combined data, we'll use the registrations endpoint that includes both selection and placement status
       const params = new URLSearchParams();
       if (filters.selection_status !== "all") {
         params.append("selection_status", filters.selection_status);
@@ -103,7 +100,6 @@ const SelectionAndPlacementManagement = () => {
 
     setSaving(true);
     try {
-      // Update selection status using the selection endpoint
       if (
         formData.selection_status &&
         formData.selection_status !== selectedRegistration.selection_status
@@ -115,7 +111,6 @@ const SelectionAndPlacementManagement = () => {
         });
       }
 
-      // Update placement status using the placement endpoint
       if (
         formData.placement_status &&
         formData.placement_status !== selectedRegistration.placement_status
@@ -134,7 +129,7 @@ const SelectionAndPlacementManagement = () => {
       });
 
       handleCloseModal();
-      fetchRegistrations(); // Refresh data
+      fetchRegistrations();
     } catch (error) {
       console.error("Error updating status:", error);
       setMessage({
@@ -210,9 +205,8 @@ const SelectionAndPlacementManagement = () => {
       {/* Alert Message */}
       {message.text && (
         <div
-          className={`alert alert-${
-            message.type === "error" ? "danger" : "success"
-          } alert-dismissible fade show`}
+          className={`alert alert-${message.type === "error" ? "danger" : "success"
+            } alert-dismissible fade show`}
           role="alert"
         >
           {message.text}
@@ -289,7 +283,7 @@ const SelectionAndPlacementManagement = () => {
               <h5 className="mb-0">Daftar Peserta ({registrations.length})</h5>
               <div>
                 <button
-                  className="btn btn-sm btn-outline-secondary"
+                  className="btn btn-sm btn-outline-primary"
                   onClick={fetchRegistrations}
                 >
                   <i className="bi bi-arrow-clockwise me-1"></i>
@@ -314,12 +308,12 @@ const SelectionAndPlacementManagement = () => {
 
               {registrations.length === 0 ? (
                 <div className="text-center py-5">
-                  <div className="display-1 text-muted mb-3">👥</div>
+                  <div className="display-1 text-muted mb-3"><i className="bi bi-people"></i></div>
                   <h5>Tidak ada data peserta</h5>
                   <p className="text-muted">
                     {filters.selection_status !== "all" ||
-                    filters.placement_status !== "all" ||
-                    filters.search
+                      filters.placement_status !== "all" ||
+                      filters.search
                       ? "Coba ubah filter atau kata kunci pencarian"
                       : "Belum ada peserta yang terdaftar"}
                   </p>

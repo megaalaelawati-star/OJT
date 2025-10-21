@@ -3,11 +3,8 @@ import db from "../config/database.js";
 
 const router = express.Router();
 
-// Get user profile
 router.get("/profile", async (req, res) => {
   try {
-    // This would typically get user ID from auth middleware
-    // For now, return placeholder
     res.json({
       success: true,
       data: {

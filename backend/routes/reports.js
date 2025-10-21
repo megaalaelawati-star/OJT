@@ -5,7 +5,6 @@ import PDFDocument from "pdfkit";
 
 const router = express.Router();
 
-// Get financial reports summary
 router.get("/financial/summary", async (req, res) => {
   try {
     const { start_date, end_date, program } = req.query;
@@ -42,7 +41,6 @@ router.get("/financial/summary", async (req, res) => {
 
     const [summary] = await db.promise().query(query, params);
 
-    // Get payment status distribution
     const [statusDistribution] = await db.promise().query(`
       SELECT 
         status,
@@ -53,7 +51,6 @@ router.get("/financial/summary", async (req, res) => {
       GROUP BY status
     `);
 
-    // Get monthly revenue trend
     const [monthlyTrend] = await db.promise().query(`
       SELECT 
         DATE_FORMAT(payment_date, '%Y-%m') as month,
@@ -83,7 +80,6 @@ router.get("/financial/summary", async (req, res) => {
   }
 });
 
-// Get detailed financial report - PERBAIKAN: hapus p.cost
 router.get("/financial/detailed", async (req, res) => {
   try {
     const { start_date, end_date, program, status, search } = req.query;
@@ -152,7 +148,6 @@ router.get("/financial/detailed", async (req, res) => {
   }
 });
 
-// Export to Excel - PERBAIKAN: hapus p.cost
 router.get("/financial/export/excel", async (req, res) => {
   try {
     const { start_date, end_date, program, status } = req.query;
@@ -206,11 +201,9 @@ router.get("/financial/export/excel", async (req, res) => {
 
     const [payments] = await db.promise().query(query, params);
 
-    // Create workbook
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("Laporan Keuangan");
 
-    // Add headers
     worksheet.columns = [
       { header: "No", key: "no", width: 5 },
       { header: "Invoice Number", key: "invoice_number", width: 20 },
@@ -226,7 +219,6 @@ router.get("/financial/export/excel", async (req, res) => {
       { header: "Created At", key: "created_at", width: 15 },
     ];
 
-    // Add data
     payments.forEach((payment, index) => {
       worksheet.addRow({
         no: index + 1,
@@ -240,7 +232,6 @@ router.get("/financial/export/excel", async (req, res) => {
       });
     });
 
-    // Add summary row
     const totalRow = payments.length + 3;
     worksheet.addRow({});
     worksheet.addRow({
@@ -252,7 +243,6 @@ router.get("/financial/export/excel", async (req, res) => {
       ),
     });
 
-    // Style the header
     worksheet.getRow(1).font = { bold: true };
     worksheet.getRow(1).fill = {
       type: "pattern",
@@ -260,7 +250,6 @@ router.get("/financial/export/excel", async (req, res) => {
       fgColor: { argb: "FFE6E6FA" },
     };
 
-    // Set response headers
     res.setHeader(
       "Content-Type",
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -272,7 +261,6 @@ router.get("/financial/export/excel", async (req, res) => {
       }.xlsx"`
     );
 
-    // Write to response
     await workbook.xlsx.write(res);
     res.end();
   } catch (error) {
@@ -284,12 +272,10 @@ router.get("/financial/export/excel", async (req, res) => {
   }
 });
 
-// Export to PDF
 router.get("/financial/export/pdf", async (req, res) => {
   try {
     const { start_date, end_date } = req.query;
 
-    // Build query dengan parameterized queries untuk menghindari SQL injection
     let summaryQuery = `
       SELECT 
         COUNT(*) as total_transactions,
@@ -314,7 +300,6 @@ router.get("/financial/export/pdf", async (req, res) => {
 
     const [summary] = await db.promise().query(summaryQuery, summaryParams);
 
-    // Get recent payments dengan filter yang sama
     let recentPaymentsQuery = `
       SELECT 
         py.*,
@@ -344,10 +329,8 @@ router.get("/financial/export/pdf", async (req, res) => {
       .promise()
       .query(recentPaymentsQuery, recentParams);
 
-    // Create PDF document
     const doc = new PDFDocument();
 
-    // Set response headers
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader(
       "Content-Disposition",
@@ -356,16 +339,13 @@ router.get("/financial/export/pdf", async (req, res) => {
       }.pdf"`
     );
 
-    // Pipe PDF to response
     doc.pipe(res);
 
-    // Add content to PDF
     doc.fontSize(20).text("Laporan Keuangan", 100, 100);
     doc
       .fontSize(12)
       .text(`Tanggal: ${new Date().toLocaleDateString("id-ID")}`, 100, 130);
 
-    // Add summary dengan data yang sudah diperbaiki
     doc.text("Ringkasan Keuangan:", 100, 170);
     doc.text(
       `Total Pendapatan: Rp ${
@@ -395,7 +375,6 @@ router.get("/financial/export/pdf", async (req, res) => {
       );
     }
 
-    // Add recent transactions
     doc.text("Transaksi Terbaru:", 100, 290);
     let yPosition = 310;
 
@@ -415,7 +394,6 @@ router.get("/financial/export/pdf", async (req, res) => {
       yPosition += 20;
     });
 
-    // Finalize PDF
     doc.end();
   } catch (error) {
     console.error("Error exporting to PDF:", error);

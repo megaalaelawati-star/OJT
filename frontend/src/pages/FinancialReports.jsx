@@ -17,16 +17,32 @@ const FinancialReports = () => {
   });
 
   useEffect(() => {
-    fetchFinancialSummary();
-    fetchDetailedReports();
-    fetchPrograms();
+    fetchFinancialData();
   }, [filters]);
+
+  const fetchFinancialData = async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      await Promise.all([
+        fetchFinancialSummary(),
+        fetchDetailedReports(),
+        fetchPrograms(),
+      ]);
+    } catch (error) {
+      console.error("Error fetching financial data:", error);
+      setError("Gagal memuat data keuangan");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchFinancialSummary = async () => {
     try {
       const params = new URLSearchParams();
       Object.keys(filters).forEach((key) => {
-        if (filters[key] !== "all" && filters[key] !== "") {
+        if (filters[key] !== "all" && filters[key] !== "" && key !== "search") {
           params.append(key, filters[key]);
         }
       });
@@ -41,13 +57,12 @@ const FinancialReports = () => {
       }
     } catch (error) {
       console.error("Error fetching financial summary:", error);
-      setError("Error loading financial summary");
+      throw error;
     }
   };
 
   const fetchDetailedReports = async () => {
     try {
-      setLoading(true);
       const params = new URLSearchParams();
       Object.keys(filters).forEach((key) => {
         if (filters[key] !== "all" && filters[key] !== "") {
@@ -65,9 +80,7 @@ const FinancialReports = () => {
       }
     } catch (error) {
       console.error("Error fetching detailed reports:", error);
-      setError("Error loading detailed reports");
-    } finally {
-      setLoading(false);
+      throw error;
     }
   };
 
@@ -79,6 +92,7 @@ const FinancialReports = () => {
       }
     } catch (error) {
       console.error("Error fetching programs:", error);
+      throw error;
     }
   };
 
@@ -89,9 +103,21 @@ const FinancialReports = () => {
     }));
   };
 
+  const handleResetFilters = () => {
+    setFilters({
+      program: "all",
+      start_date: "",
+      end_date: "",
+      status: "all",
+      search: "",
+    });
+  };
+
   const handleExportExcel = async () => {
     try {
       setExportLoading(true);
+      setError("");
+
       const params = new URLSearchParams();
       Object.keys(filters).forEach((key) => {
         if (filters[key] !== "all" && filters[key] !== "") {
@@ -103,24 +129,30 @@ const FinancialReports = () => {
         `/api/reports/financial/export/excel?${params}`,
         {
           responseType: "blob",
+          timeout: 30000,
         }
       );
 
-      // Create blob and download
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute(
-        "download",
-        `laporan-keuangan-${new Date().toISOString().split("T")[0]}.xlsx`
-      );
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
+      if (response.status === 200) {
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute(
+          "download",
+          `laporan-keuangan-${new Date().toISOString().split("T")[0]}.xlsx`
+        );
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
+      }
     } catch (error) {
       console.error("Error exporting to Excel:", error);
-      alert("Gagal mengekspor ke Excel");
+      const errorMessage =
+        error.response?.status === 404
+          ? "Fitur export Excel belum tersedia"
+          : "Gagal mengekspor ke Excel. Silakan coba lagi.";
+      setError(errorMessage);
     } finally {
       setExportLoading(false);
     }
@@ -129,6 +161,8 @@ const FinancialReports = () => {
   const handleExportPDF = async () => {
     try {
       setExportLoading(true);
+      setError("");
+
       const params = new URLSearchParams();
       Object.keys(filters).forEach((key) => {
         if (filters[key] !== "all" && filters[key] !== "") {
@@ -140,24 +174,30 @@ const FinancialReports = () => {
         `/api/reports/financial/export/pdf?${params}`,
         {
           responseType: "blob",
+          timeout: 30000,
         }
       );
 
-      // Create blob and download
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute(
-        "download",
-        `laporan-keuangan-${new Date().toISOString().split("T")[0]}.pdf`
-      );
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
+      if (response.status === 200) {
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute(
+          "download",
+          `laporan-keuangan-${new Date().toISOString().split("T")[0]}.pdf`
+        );
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
+      }
     } catch (error) {
       console.error("Error exporting to PDF:", error);
-      alert("Gagal mengekspor ke PDF");
+      const errorMessage =
+        error.response?.status === 404
+          ? "Fitur export PDF belum tersedia"
+          : "Gagal mengekspor ke PDF. Silakan coba lagi.";
+      setError(errorMessage);
     } finally {
       setExportLoading(false);
     }
@@ -180,7 +220,7 @@ const FinancialReports = () => {
 
   const getStatusBadge = (status) => {
     const statusConfig = {
-      pending: { class: "bg-warning", text: "Menunggu" },
+      pending: { class: "bg-warning text-dark", text: "Menunggu" },
       installment_1: { class: "bg-info", text: "Cicilan 1" },
       installment_2: { class: "bg-info", text: "Cicilan 2" },
       installment_3: { class: "bg-info", text: "Cicilan 3" },
@@ -221,12 +261,29 @@ const FinancialReports = () => {
     return payment.status;
   };
 
+  const calculateRemainingBalance = () => {
+    if (!summary?.summary) return 0;
+    const totalAmount = parseFloat(summary.summary.total_amount || 0);
+    const totalPaid = parseFloat(summary.summary.total_amount_paid || 0);
+    return totalAmount - totalPaid;
+  };
+
   if (loading && !summary) {
     return (
       <div className="container mt-4">
-        <div className="d-flex justify-content-center">
-          <div className="spinner-border text-primary" role="status">
-            <span className="visually-hidden">Loading...</span>
+        <div
+          className="d-flex justify-content-center align-items-center"
+          style={{ minHeight: "400px" }}
+        >
+          <div className="text-center">
+            <div
+              className="spinner-border text-primary mb-3"
+              style={{ width: "3rem", height: "3rem" }}
+              role="status"
+            >
+              <span className="visually-hidden">Loading...</span>
+            </div>
+            <p className="text-muted">Memuat laporan keuangan...</p>
           </div>
         </div>
       </div>
@@ -250,6 +307,7 @@ const FinancialReports = () => {
           className="alert alert-warning alert-dismissible fade show"
           role="alert"
         >
+          <i className="bi bi-exclamation-triangle me-2"></i>
           {error}
           <button
             type="button"
@@ -262,40 +320,85 @@ const FinancialReports = () => {
       {/* Summary Cards */}
       {summary && (
         <div className="row mb-4">
-          <div className="col-md-4 mb-3 mb-md-0">
-            <div className="card bg-primary text-white text-center h-100">
+          <div className="col-md-3 mb-3">
+            <div className="card bg-primary">
               <div className="card-body">
-                <h4 className="card-title">Total Pemasukan Bersih</h4>
-                <p className="card-text h4 text-white">
-                  {formatCurrency(summary.summary?.total_revenue)}
-                </p>
-                <small className="text-white">
-                  {summary.summary?.total_transactions} transaksi
-                </small>
+                <div className="d-flex justify-content-between align-items-center">
+                  <div>
+                    <h6 className="card-title text-white mb-1">
+                      Total Pemasukan
+                    </h6>
+                    <h4 className="text-white mb-0">
+                      {formatCurrency(summary.summary?.total_revenue)}
+                    </h4>
+                    <small className="text-white">
+                      {summary.summary?.total_transactions} transaksi
+                    </small>
+                  </div>
+                  <div className="text-white">
+                    <i className="bi bi-cash-coin fs-2"></i>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-          <div className="col-md-4 mb-3 mb-md-0">
-            <div className="card bg-primary text-white text-center h-100">
+          <div className="col-md-3 mb-3">
+            <div className="card bg-primary">
               <div className="card-body">
-                <h4 className="card-title">Pembayaran Belum Verifikasi</h4>
-                <p className="card-text h4">
-                  {formatCurrency(summary.summary?.total_pending)}
-                </p>
-                <small>Menunggu konfirmasi admin</small>
+                <div className="d-flex justify-content-between align-items-center">
+                  <div>
+                    <h6 className="card-title text-white mb-1">
+                      Menunggu Verifikasi
+                    </h6>
+                    <h4 className="text-white mb-0">
+                      {formatCurrency(summary.summary?.total_pending)}
+                    </h4>
+                    <small className="text-white">Belum dikonfirmasi</small>
+                  </div>
+                  <div className="text-white">
+                    <i className="bi bi-clock fs-2"></i>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-          <div className="col-md-4 mb-3 mb-md-0">
-            <div className="card bg-primary text-white text-center h-100">
+          <div className="col-md-3 mb-3">
+            <div className="card bg-primary">
               <div className="card-body">
-                <h4 className="card-title">Estimasi Tunggakan</h4>
-                <p className="card-text h4 text-white">
-                  {formatCurrency(summary.summary?.total_outstanding)}
-                </p>
-                <small className="text-white">
-                  {formatCurrency(summary.summary?.total_overdue)} overdue
-                </small>
+                <div className="d-flex justify-content-between align-items-center">
+                  <div>
+                    <h6 className="card-title text-white mb-1">
+                      Estimasi Tunggakan
+                    </h6>
+                    <h4 className="text-white mb-0">
+                      {formatCurrency(summary.summary?.total_outstanding)}
+                    </h4>
+                    <small className="text-white">
+                      {formatCurrency(summary.summary?.total_overdue)} overdue
+                    </small>
+                  </div>
+                  <div className="text-white">
+                    <i className="bi bi-exclamation-triangle fs-2"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="col-md-3 mb-3">
+            <div className="card bg-primary">
+              <div className="card-body">
+                <div className="d-flex justify-content-between align-items-center">
+                  <div>
+                    <h6 className="card-title text-white mb-1">Sisa Tagihan</h6>
+                    <h4 className="text-white mb-0">
+                      {formatCurrency(calculateRemainingBalance())}
+                    </h4>
+                    <small className="text-white">Belum dibayar</small>
+                  </div>
+                  <div className="text-white">
+                    <i className="bi bi-receipt fs-2"></i>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -304,91 +407,102 @@ const FinancialReports = () => {
 
       {/* Filter Section */}
       <div className="card mb-4">
-        <div className="card-header">
-          <h5 className="mb-0">Filter & Pencarian</h5>
+        <div className="card-header bg-light">
+          <h5 className="mb-0">
+            Filter & Pencarian
+          </h5>
         </div>
         <div className="card-body">
           <div className="row g-3">
-            <div className="col-md-2">
-              <div className="mb-3">
-                <label className="form-label">Program</label>
-                <select
-                  className="form-select"
-                  value={filters.program}
-                  onChange={(e) =>
-                    handleFilterChange("program", e.target.value)
-                  }
-                >
-                  <option value="all">Semua Program</option>
-                  {programs.map((program) => (
-                    <option key={program.id} value={program.id}>
-                      {program.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <div className="col-md-3">
+              <label className="form-label">Program</label>
+              <select
+                className="form-select"
+                value={filters.program}
+                onChange={(e) => handleFilterChange("program", e.target.value)}
+              >
+                <option value="all">Semua Program</option>
+                {programs.map((program) => (
+                  <option key={program.id} value={program.id}>
+                    {program.name}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="col-md-2">
-              <div className="mb-3">
-                <label className="form-label">Status</label>
-                <select
-                  className="form-select"
-                  value={filters.status}
-                  onChange={(e) => handleFilterChange("status", e.target.value)}
-                >
-                  <option value="all">Semua Status</option>
-                  <option value="pending">Pending</option>
-                  <option value="installment_1">Cicilan 1</option>
-                  <option value="installment_2">Cicilan 2</option>
-                  <option value="installment_3">Cicilan 3</option>
-                  <option value="paid">Lunas</option>
-                  <option value="overdue">Jatuh Tempo</option>
-                </select>
-              </div>
+              <label className="form-label">Status</label>
+              <select
+                className="form-select"
+                value={filters.status}
+                onChange={(e) => handleFilterChange("status", e.target.value)}
+              >
+                <option value="all">Semua Status</option>
+                <option value="pending">Pending</option>
+                <option value="installment_1">Cicilan 1</option>
+                <option value="installment_2">Cicilan 2</option>
+                <option value="installment_3">Cicilan 3</option>
+                <option value="installment_4">Cicilan 4</option>
+                <option value="installment_5">Cicilan 5</option>
+                <option value="installment_6">Cicilan 6</option>
+                <option value="paid">Lunas</option>
+                <option value="overdue">Jatuh Tempo</option>
+              </select>
             </div>
             <div className="col-md-2">
-              <div className="mb-3">
-                <label className="form-label">Tanggal Mulai</label>
-                <input
-                  type="date"
-                  className="form-control"
-                  value={filters.start_date}
-                  onChange={(e) =>
-                    handleFilterChange("start_date", e.target.value)
-                  }
-                />
-              </div>
+              <label className="form-label">Tanggal Mulai</label>
+              <input
+                type="date"
+                className="form-control"
+                value={filters.start_date}
+                onChange={(e) =>
+                  handleFilterChange("start_date", e.target.value)
+                }
+              />
             </div>
             <div className="col-md-2">
-              <div className="mb-3">
-                <label className="form-label">Tanggal Akhir</label>
-                <input
-                  type="date"
-                  className="form-control"
-                  value={filters.end_date}
-                  onChange={(e) =>
-                    handleFilterChange("end_date", e.target.value)
-                  }
-                />
-              </div>
+              <label className="form-label">Tanggal Akhir</label>
+              <input
+                type="date"
+                className="form-control"
+                value={filters.end_date}
+                onChange={(e) => handleFilterChange("end_date", e.target.value)}
+              />
             </div>
-            <div className="col-md-4">
-              <div className="mb-3">
-                <label className="form-label">&nbsp;</label>
+            <div className="col-md-3">
+              <label className="form-label">Pencarian</label>
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Cari nama, email, atau invoice..."
+                value={filters.search}
+                onChange={(e) => handleFilterChange("search", e.target.value)}
+              />
+            </div>
+            <div className="col-md-12">
+              <div className="d-flex justify-content-between">
                 <button
-                  className="btn btn-outline-primary w-100"
-                  onClick={() =>
-                    setFilters({
-                      program: "all",
-                      start_date: "",
-                      end_date: "",
-                      status: "all",
-                      search: "",
-                    })
-                  }
-                  title="Reset Filter"
+                  className="btn btn-outline-secondary"
+                  onClick={handleResetFilters}
                 >
-                  <i className="bi bi-arrow-clockwise"></i> Reset Filter
+                  <i className="bi bi-arrow-clockwise me-2"></i>
+                  Reset Filter
+                </button>
+                <button
+                  className="btn btn-primary"
+                  onClick={fetchFinancialData}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm me-2"></span>
+                      Memuat...
+                    </>
+                  ) : (
+                    <>
+                      <i className="bi bi-search me-2"></i>
+                      Terapkan Filter
+                    </>
+                  )}
                 </button>
               </div>
             </div>
@@ -402,12 +516,20 @@ const FinancialReports = () => {
           <div className="card">
             <div className="card-body">
               <div className="d-flex justify-content-between align-items-center">
-                <h5 className="mb-0">Ekspor Laporan</h5>
+                <div>
+                  <h5 className="mb-1">
+                    <i className="bi bi-download me-2"></i>
+                    Ekspor Laporan
+                  </h5>
+                  <p className="text-muted mb-0">
+                    Download laporan dalam format Excel atau PDF
+                  </p>
+                </div>
                 <div>
                   <button
                     className="btn btn-success me-2"
                     onClick={handleExportExcel}
-                    disabled={exportLoading}
+                    disabled={exportLoading || detailedReports.length === 0}
                   >
                     {exportLoading ? (
                       <>
@@ -417,14 +539,14 @@ const FinancialReports = () => {
                     ) : (
                       <>
                         <i className="bi bi-file-earmark-excel me-2"></i>
-                        Export ke Excel
+                        Excel
                       </>
                     )}
                   </button>
                   <button
                     className="btn btn-danger"
                     onClick={handleExportPDF}
-                    disabled={exportLoading}
+                    disabled={exportLoading || detailedReports.length === 0}
                   >
                     {exportLoading ? (
                       <>
@@ -434,7 +556,7 @@ const FinancialReports = () => {
                     ) : (
                       <>
                         <i className="bi bi-file-earmark-pdf me-2"></i>
-                        Export ke PDF
+                        PDF
                       </>
                     )}
                   </button>
@@ -449,18 +571,18 @@ const FinancialReports = () => {
       <div className="row">
         <div className="col">
           <div className="card">
-            <div className="card-header d-flex justify-content-between align-items-center">
+            <div className="card-header bg-light d-flex justify-content-between align-items-center">
               <h5 className="mb-0">
                 Detail Transaksi ({detailedReports.length})
               </h5>
               <div>
                 <button
                   className="btn btn-sm btn-outline-primary"
-                  onClick={fetchDetailedReports}
+                  onClick={fetchFinancialData}
                   disabled={loading}
                 >
                   <i className="bi bi-arrow-clockwise me-2"></i>
-                  Refresh
+                  {loading ? "Memuat..." : "Refresh"}
                 </button>
               </div>
             </div>
@@ -468,14 +590,19 @@ const FinancialReports = () => {
             <div className="card-body">
               {loading ? (
                 <div className="text-center py-4">
-                  <div className="spinner-border text-primary" role="status">
+                  <div
+                    className="spinner-border text-primary mb-3"
+                    role="status"
+                  >
                     <span className="visually-hidden">Loading...</span>
                   </div>
-                  <p className="mt-2 text-muted">Memuat data transaksi...</p>
+                  <p className="text-muted">Memuat data transaksi...</p>
                 </div>
               ) : detailedReports.length === 0 ? (
                 <div className="text-center py-5">
-                  <div className="display-1 text-muted mb-3">💸</div>
+                  <div className="text-muted mb-3">
+                    <i className="bi bi-receipt fs-1"></i>
+                  </div>
                   <h5>Tidak ada data transaksi</h5>
                   <p className="text-muted">
                     Coba ubah filter atau tanggal untuk melihat data
@@ -483,32 +610,35 @@ const FinancialReports = () => {
                 </div>
               ) : (
                 <div className="table-responsive">
-                  <table className="table table-striped table-bordered">
+                  <table className="table table-striped table-hover">
                     <thead className="table-light align-middle">
                       <tr>
-                        <th>#</th>
-                        <th>Invoice</th>
+                        <th width="50">#</th>
+                        <th width="150">Invoice</th>
                         <th>Nama Peserta</th>
-                        <th>Program</th>
-                        <th>Status</th>
-                        <th>Jenis Pembayaran</th>
-                        <th>Total Tagihan</th>
-                        <th>Sudah Dibayar</th>
-                        <th>Metode</th>
-                        <th>Tanggal</th>
+                        <th width="120">Program</th>
+                        <th width="120">Status</th>
+                        <th width="150">Jenis Pembayaran</th>
+                        <th width="120">Total Tagihan</th>
+                        <th width="120">Sudah Dibayar</th>
+                        <th width="100">Metode</th>
+                        <th width="120">Tanggal</th>
                       </tr>
                     </thead>
                     <tbody className="align-middle">
                       {detailedReports.map((report, index) => (
                         <tr key={report.id}>
-                          <td>{index + 1}</td>
+                          <td className="text-muted">{index + 1}</td>
                           <td>
                             <div>
-                              <strong>{report.invoice_number}</strong>
+                              <strong className="text-primary">
+                                {report.invoice_number}
+                              </strong>
                               {report.receipt_number && (
                                 <div>
                                   <small className="text-success">
-                                    Kwitansi: {report.receipt_number}
+                                    <i className="bi bi-receipt me-1"></i>
+                                    {report.receipt_number}
                                   </small>
                                 </div>
                               )}
@@ -519,24 +649,31 @@ const FinancialReports = () => {
                               <strong>{report.full_name}</strong>
                               <div>
                                 <small className="text-muted">
+                                  <i className="bi bi-envelope me-1"></i>
                                   {report.email}
                                 </small>
                               </div>
                             </div>
                           </td>
-                          <td>{report.program_name}</td>
+                          <td>
+                            <span className="badge bg-primary text-white">
+                              {report.program_name}
+                            </span>
+                          </td>
                           <td>{getStatusBadge(report.status)}</td>
-                          <td>{getInstallmentText(report)}</td>
-                          <td className="fw-bold">
+                          <td>
+                            <small>{getInstallmentText(report)}</small>
+                          </td>
+                          <td className="fw-bold text-end">
                             {formatCurrency(report.amount)}
                           </td>
                           <td
-                            className={
+                            className={`text-end ${
                               parseFloat(report.amount_paid || 0) >=
                               parseFloat(report.amount || 0)
                                 ? "text-success fw-bold"
                                 : "text-warning"
-                            }
+                            }`}
                           >
                             {formatCurrency(report.amount_paid)}
                           </td>
@@ -563,26 +700,21 @@ const FinancialReports = () => {
                       ))}
                     </tbody>
                     {summary && (
-                      <tfoot className="table-light">
+                      <tfoot className="table-light align-middle">
                         <tr>
                           <td colSpan="6" className="text-end fw-bold">
                             TOTAL:
                           </td>
-                          <td className="fw-bold">
+                          <td className="fw-bold text-end">
                             {formatCurrency(summary.summary?.total_amount)}
                           </td>
-                          <td className="fw-bold">
+                          <td className="fw-bold text-end">
                             {formatCurrency(summary.summary?.total_amount_paid)}
                           </td>
                           <td colSpan="2">
-                            <small>
+                            <small className="text-muted">
                               Sisa:{" "}
-                              {formatCurrency(
-                                parseFloat(summary.summary?.total_amount || 0) -
-                                  parseFloat(
-                                    summary.summary?.total_amount_paid || 0
-                                  )
-                              )}
+                              {formatCurrency(calculateRemainingBalance())}
                             </small>
                           </td>
                         </tr>
@@ -595,76 +727,6 @@ const FinancialReports = () => {
           </div>
         </div>
       </div>
-
-      {/* Status Distribution */}
-      {summary && summary.statusDistribution && (
-        <div className="row mt-4">
-          <div className="col-md-6">
-            <div className="card">
-              <div className="card-header">
-                <h6 className="mb-0">Distribusi Status Pembayaran</h6>
-              </div>
-              <div className="card-body">
-                <div className="table-responsive">
-                  <table className="table table-sm">
-                    <thead>
-                      <tr>
-                        <th>Status</th>
-                        <th>Jumlah</th>
-                        <th>Total Amount</th>
-                        <th>Total Paid</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {summary.statusDistribution.map((item) => (
-                        <tr key={item.status}>
-                          <td>{getStatusBadge(item.status)}</td>
-                          <td>{item.count}</td>
-                          <td>{formatCurrency(item.total_amount)}</td>
-                          <td>{formatCurrency(item.total_paid)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="col-md-6">
-            <div className="card">
-              <div className="card-header">
-                <h6 className="mb-0">Trend Bulanan</h6>
-              </div>
-              <div className="card-body">
-                {summary.monthlyTrend && summary.monthlyTrend.length > 0 ? (
-                  <div className="table-responsive">
-                    <table className="table table-sm">
-                      <thead>
-                        <tr>
-                          <th>Bulan</th>
-                          <th>Transaksi</th>
-                          <th>Pendapatan</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {summary.monthlyTrend.map((item) => (
-                          <tr key={item.month}>
-                            <td>{item.month}</td>
-                            <td>{item.transaction_count}</td>
-                            <td>{formatCurrency(item.revenue)}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <p className="text-muted text-center">Tidak ada data trend</p>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
