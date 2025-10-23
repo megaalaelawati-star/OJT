@@ -21,7 +21,6 @@ const UserManagement = () => {
         fetchUsers();
     }, []);
 
-    // Auto-hide notifications after 5 seconds
     useEffect(() => {
         if (success || error) {
             const timer = setTimeout(() => {

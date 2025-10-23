@@ -22,7 +22,6 @@ import Contact from "./pages/Contact";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./App.css";
 
-// Component untuk route yang hanya bisa diakses oleh user yang belum login
 const PublicRoute = ({ children }) => {
   const { isAuthenticated, isAdmin, loading } = useAuth();
 
@@ -36,7 +35,6 @@ const PublicRoute = ({ children }) => {
     );
   }
 
-  // Jika sudah login, redirect ke dashboard sesuai role
   if (isAuthenticated) {
     if (isAdmin) {
       return <Navigate to="/admin" replace />;
@@ -61,7 +59,6 @@ const ProtectedRoute = ({ children }) => {
     );
   }
 
-  // Hanya participant yang bisa akses
   if (!isAuthenticated || !isParticipant) {
     return <Navigate to="/login" replace />;
   }
@@ -82,7 +79,6 @@ const AdminRoute = ({ children }) => {
     );
   }
 
-  // Hanya admin yang bisa akses
   if (!isAuthenticated || !isAdmin) {
     return <Navigate to="/login" replace />;
   }

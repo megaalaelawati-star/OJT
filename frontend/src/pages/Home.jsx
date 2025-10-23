@@ -78,12 +78,10 @@ const Home = () => {
     const waNumber = "6281110119273";
     const waMessage = "Halo Fitalenta, saya tertarik dengan program magang. Mohon info pendaftaran dan langkah selanjutnya. Terima kasih!";
 
-    // **Format yang lebih reliable:**
     const waUrl = `https://api.whatsapp.com/send?phone=${waNumber}&text=${encodeURIComponent(waMessage)}`;
 
-    console.log("WhatsApp URL:", waUrl); // Untuk debugging
+    // console.log("WhatsApp URL:", waUrl);
 
-    // Buka di tab/window baru
     window.open(waUrl, '_blank', 'noopener,noreferrer');
   };
 

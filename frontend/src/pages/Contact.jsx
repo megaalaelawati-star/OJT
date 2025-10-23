@@ -13,7 +13,6 @@ const Contact = () => {
   const [loading, setLoading] = useState(false);
   const [submitStatus, setSubmitStatus] = useState(null);
 
-  // **PERBAIKAN: Tambahkan fungsi WhatsApp dengan pesan**
   const handleWhatsAppClick = (customMessage = null) => {
     const waNumber = "6281110119273";
     const defaultMessage = "Halo Fitalenta, saya ingin bertanya tentang program magang. Bisakah Anda memberikan informasi lebih lanjut?";
@@ -41,7 +40,7 @@ const Contact = () => {
       icon: "bi-telephone",
       title: "Telepon",
       content: "+62 811 1011 9273",
-      link: "tel:+6281110119273", // **PERBAIKAN: Format nomor yang benar**
+      link: "tel:+6281110119273",
     },
     {
       icon: "bi-whatsapp",
@@ -205,7 +204,6 @@ const Contact = () => {
                                 ))}
                               </a>
                             ) : info.onClick ? (
-                              // **PERBAIKAN: Gunakan button untuk WhatsApp dengan onClick**
                               <button
                                 onClick={info.onClick}
                                 className="card-text text-muted text-decoration-none border-0 bg-transparent p-0 text-start"

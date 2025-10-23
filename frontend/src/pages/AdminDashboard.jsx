@@ -416,7 +416,6 @@ const AdminDashboard = () => {
     });
   };
 
-  // Fungsi untuk menampilkan data personal yang lengkap
   const renderPersonalInfo = (registration) => {
     return (
       <div className="row">
@@ -458,7 +457,6 @@ const AdminDashboard = () => {
     );
   };
 
-  // Fungsi untuk menampilkan informasi orang tua
   const renderParentInfo = (registration) => {
     return (
       <div className="row mt-3">

@@ -17,7 +17,6 @@ const Register = () => {
   const { register, isAuthenticated, isAdmin, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
-  // Redirect jika sudah login
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
       if (isAdmin) {
@@ -41,7 +40,6 @@ const Register = () => {
     setLoading(true);
     setError("");
 
-    // Validasi form
     if (!formData.full_name || !formData.email || !formData.password) {
       setError("Semua field yang bertanda * harus diisi");
       setLoading(false);
@@ -72,7 +70,6 @@ const Register = () => {
     setLoading(false);
   };
 
-  // Tampilkan loading saat authLoading (sedang memeriksa status login)
   if (authLoading) {
     return (
       <div className="container mt-5">

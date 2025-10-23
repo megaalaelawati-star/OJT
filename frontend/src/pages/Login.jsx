@@ -14,7 +14,6 @@ const Login = () => {
   const { login, isAuthenticated, isAdmin, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
-  // Redirect jika sudah login
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
       if (isAdmin) {
@@ -59,7 +58,6 @@ const Login = () => {
     setLoading(false);
   };
 
-  // Tampilkan loading saat authLoading (sedang memeriksa status login)
   if (authLoading) {
     return (
       <div className="container mt-5">
