@@ -416,6 +416,97 @@ const AdminDashboard = () => {
     });
   };
 
+  // Fungsi untuk menampilkan data personal yang lengkap
+  const renderPersonalInfo = (registration) => {
+    return (
+      <div className="row">
+        <div className="col-md-6">
+          <h6 className="fw-bold text-primary mb-3">Informasi Pribadi</h6>
+          <div className="mb-2">
+            <strong>NIK:</strong> {registration.nik || <span className="text-muted">-</span>}
+          </div>
+          <div className="mb-2">
+            <strong>Jenis Kelamin:</strong> {registration.gender === 'L' ? 'Laki-laki' : registration.gender === 'P' ? 'Perempuan' : <span className="text-muted">-</span>}
+          </div>
+          <div className="mb-2">
+            <strong>Tempat Lahir:</strong> {registration.birth_place || <span className="text-muted">-</span>}
+          </div>
+          <div className="mb-2">
+            <strong>Tanggal Lahir:</strong> {registration.birth_date ? helpers.formatDateForBirthDate(registration.birth_date) : <span className="text-muted">-</span>}
+          </div>
+          <div className="mb-2">
+            <strong>Status Pernikahan:</strong> {registration.marital_status || <span className="text-muted">-</span>}
+          </div>
+        </div>
+
+        <div className="col-md-6">
+          <h6 className="fw-bold text-primary mb-3">Informasi Pendidikan</h6>
+          <div className="mb-2">
+            <strong>Pendidikan Terakhir:</strong> {registration.last_education || <span className="text-muted">-</span>}
+          </div>
+          <div className="mb-2">
+            <strong>Jurusan:</strong> {registration.major || <span className="text-muted">-</span>}
+          </div>
+          <div className="mb-2">
+            <strong>Institusi Pendidikan:</strong> {registration.education_institution || <span className="text-muted">-</span>}
+          </div>
+          <div className="mb-2">
+            <strong>Aktivitas Saat Ini:</strong> {registration.current_activity || <span className="text-muted">-</span>}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Fungsi untuk menampilkan informasi orang tua
+  const renderParentInfo = (registration) => {
+    return (
+      <div className="row mt-3">
+        <div className="col-12">
+          <h6 className="fw-bold text-primary mb-3">Informasi Orang Tua</h6>
+          <div className="mb-2">
+            <strong>Nomor Telepon Orang Tua:</strong> {registration.parent_phone || <span className="text-muted">-</span>}
+          </div>
+          <div className="mb-2">
+            <strong>Hubungan dengan Orang Tua:</strong> {registration.parent_relationship || <span className="text-muted">-</span>}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderAddressInfo = (registration) => {
+    return (
+      <div className="row">
+        <div className="col-md-6">
+          <h6 className="fw-bold text-primary mb-3">Alamat KTP</h6>
+          <div className="mb-2">
+            <strong>Provinsi:</strong> {registration.ktp_province_name || <span className="text-muted">-</span>}
+          </div>
+          <div className="mb-2">
+            <strong>Kota/Kabupaten:</strong> {registration.ktp_city_name || <span className="text-muted">-</span>}
+          </div>
+          <div className="mb-2">
+            <strong>Alamat Lengkap:</strong> {registration.ktp_address || <span className="text-muted">-</span>}
+          </div>
+        </div>
+
+        <div className="col-md-6">
+          <h6 className="fw-bold text-primary mb-3">Alamat Domisili</h6>
+          <div className="mb-2">
+            <strong>Provinsi:</strong> {registration.domicile_province_name || <span className="text-muted">-</span>}
+          </div>
+          <div className="mb-2">
+            <strong>Kota/Kabupaten:</strong> {registration.domicile_city_name || <span className="text-muted">-</span>}
+          </div>
+          <div className="mb-2">
+            <strong>Alamat Lengkap:</strong> {registration.domicile_address || <span className="text-muted">-</span>}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   if (loading && registrations.length === 0) {
     return (
       <div className="container-fluid px-2 px-md-3 mt-3 mt-md-4">
@@ -782,7 +873,7 @@ const AdminDashboard = () => {
           >
             <div className="modal-content">
               <div className="modal-header">
-                <h5 className="modal-title">Detail Status Peserta</h5>
+                <h5 className="modal-title">Detail Lengkap Peserta</h5>
                 <button
                   type="button"
                   className="btn-close"
@@ -790,147 +881,244 @@ const AdminDashboard = () => {
                 ></button>
               </div>
               <div className="modal-body">
-                <div className="row">
-                  <div className="col-md-6">
-                    <h6 className="fw-bold text-primary">Informasi Peserta</h6>
-                    <div className="mb-3">
-                      <strong>Nama:</strong> {selectedRegistration.full_name}
-                    </div>
-                    <div className="mb-3">
-                      <strong>Email:</strong> {selectedRegistration.email}
-                    </div>
-                    <div className="mb-3">
-                      <strong>Telepon:</strong> {selectedRegistration.phone}
-                    </div>
-                    <div className="mb-3">
-                      <strong>Alamat KTP:</strong>{" "}
-                      {selectedRegistration.ktp_address || "Tidak tersedia"}
-                    </div>
-                    <div className="mb-3">
-                      <strong>Alamat Domisili:</strong>{" "}
-                      {selectedRegistration.domicile_address || "Tidak tersedia"}
-                    </div>
-                  </div>
-                  <div className="col-md-6">
-                    <h6 className="fw-bold text-primary">Informasi Program</h6>
-                    <div className="mb-3">
-                      <strong>Program:</strong>{" "}
-                      {selectedRegistration.program_name}
-                    </div>
-                    <div className="mb-3">
-                      <strong>Biaya Pelatihan:</strong>{" "}
-                      {helpers.formatCurrency(
-                        selectedRegistration.program_training_cost
-                      )}
-                    </div>
-                    <div className="mb-3">
-                      <strong>Durasi:</strong>{" "}
-                      {selectedRegistration.program_duration}
-                    </div>
-                    <div className="mb-3">
-                      <strong>Kode Pendaftaran:</strong>{" "}
-                      <code>{selectedRegistration.registration_code}</code>
-                    </div>
-                  </div>
-                </div>
+                {/* Tab Navigation */}
+                <ul className="nav nav-tabs mb-4" id="detailTabs" role="tablist">
+                  <li className="nav-item" role="presentation">
+                    <button
+                      className="nav-link active"
+                      id="basic-tab"
+                      data-bs-toggle="tab"
+                      data-bs-target="#basic"
+                      type="button"
+                      role="tab"
+                      aria-controls="basic"
+                      aria-selected="true"
+                    >
+                      Informasi Dasar
+                    </button>
+                  </li>
+                  <li className="nav-item" role="presentation">
+                    <button
+                      className="nav-link"
+                      id="personal-tab"
+                      data-bs-toggle="tab"
+                      data-bs-target="#personal"
+                      type="button"
+                      role="tab"
+                      aria-controls="personal"
+                      aria-selected="false"
+                    >
+                      Data Pribadi
+                    </button>
+                  </li>
+                  <li className="nav-item" role="presentation">
+                    <button
+                      className="nav-link"
+                      id="address-tab"
+                      data-bs-toggle="tab"
+                      data-bs-target="#address"
+                      type="button"
+                      role="tab"
+                      aria-controls="address"
+                      aria-selected="false"
+                    >
+                      Alamat
+                    </button>
+                  </li>
+                  <li className="nav-item" role="presentation">
+                    <button
+                      className="nav-link"
+                      id="status-tab"
+                      data-bs-toggle="tab"
+                      data-bs-target="#status"
+                      type="button"
+                      role="tab"
+                      aria-controls="status"
+                      aria-selected="false"
+                    >
+                      Status & Dokumen
+                    </button>
+                  </li>
+                </ul>
 
-                <hr />
-
-                <div className="row mt-3">
-                  <div className="col-md-3 text-center">
-                    <h6>Pendaftaran (Interview)</h6>
-                    {getRegistrationStatusBadge(
-                      selectedRegistration.registration_status
-                    )}
+                {/* Tab Content */}
+                <div className="tab-content" id="detailTabsContent">
+                  {/* Tab 1: Informasi Dasar */}
+                  <div className="tab-pane fade show active" id="basic" role="tabpanel" aria-labelledby="basic-tab">
+                    <div className="row">
+                      <div className="col-md-6">
+                        <h6 className="fw-bold text-primary mb-3">Informasi Kontak</h6>
+                        <div className="mb-3">
+                          <strong>Nama Lengkap:</strong> {selectedRegistration.full_name}
+                        </div>
+                        <div className="mb-3">
+                          <strong>Email:</strong> {selectedRegistration.email}
+                        </div>
+                        <div className="mb-3">
+                          <strong>Telepon:</strong> {selectedRegistration.phone || <span className="text-muted">-</span>}
+                        </div>
+                        <div className="mb-3">
+                          <strong>Tanggal Pendaftaran:</strong> {helpers.formatDate(selectedRegistration.registration_date)}
+                        </div>
+                        <div className="mb-3">
+                          <strong>Kode Pendaftaran:</strong> <code>{selectedRegistration.registration_code}</code>
+                        </div>
+                      </div>
+                      <div className="col-md-6">
+                        <h6 className="fw-bold text-primary mb-3">Informasi Program</h6>
+                        <div className="mb-3">
+                          <strong>Program:</strong> {selectedRegistration.program_name}
+                        </div>
+                        <div className="mb-3">
+                          <strong>Biaya Pelatihan:</strong> {helpers.formatCurrency(selectedRegistration.program_training_cost)}
+                        </div>
+                        <div className="mb-3">
+                          <strong>Biaya Keberangkatan:</strong> {helpers.formatCurrency(selectedRegistration.program_departure_cost)}
+                        </div>
+                        <div className="mb-3">
+                          <strong>Durasi:</strong> {selectedRegistration.program_duration}
+                        </div>
+                        <div className="mb-3">
+                          <strong>Lokasi:</strong> {selectedRegistration.program_location}
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="col-md-3 text-center">
-                    <h6>Pembayaran</h6>
-                    {getPaymentStatusBadge(
-                      selectedRegistration.payment_status,
-                      selectedRegistration.program_installment_plan
-                    )}
-                    {selectedRegistration.amount_paid > 0 && (
-                      <div className="mt-2">
-                        <small className="text-muted">
-                          Dibayar: {helpers.formatCurrency(selectedRegistration.amount_paid)}
-                        </small>
-                        {selectedRegistration.payment_date && (
-                          <div>
+
+                  {/* Tab 2: Data Pribadi */}
+                  <div className="tab-pane fade" id="personal" role="tabpanel" aria-labelledby="personal-tab">
+                    {renderPersonalInfo(selectedRegistration)}
+                    {renderParentInfo(selectedRegistration)}
+                  </div>
+
+                  {/* Tab 3: Alamat */}
+                  <div className="tab-pane fade" id="address" role="tabpanel" aria-labelledby="address-tab">
+                    {renderAddressInfo(selectedRegistration)}
+                  </div>
+
+                  {/* Tab 4: Status & Dokumen */}
+                  <div className="tab-pane fade" id="status" role="tabpanel" aria-labelledby="status-tab">
+                    <div className="row mb-4">
+                      <div className="col-md-3 text-center">
+                        <h6>Pendaftaran (Interview)</h6>
+                        {getRegistrationStatusBadge(selectedRegistration.registration_status)}
+                      </div>
+                      <div className="col-md-3 text-center">
+                        <h6>Pembayaran</h6>
+                        {getPaymentStatusBadge(selectedRegistration.payment_status, selectedRegistration.program_installment_plan)}
+                        {selectedRegistration.amount_paid > 0 && (
+                          <div className="mt-2">
                             <small className="text-muted">
-                              Tanggal: {helpers.formatDate(selectedRegistration.payment_date)}
+                              Dibayar: {helpers.formatCurrency(selectedRegistration.amount_paid)}
+                            </small>
+                            {selectedRegistration.payment_date && (
+                              <div>
+                                <small className="text-muted">
+                                  Tanggal: {helpers.formatDate(selectedRegistration.payment_date)}
+                                </small>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      <div className="col-md-3 text-center">
+                        <h6>Seleksi Diklat</h6>
+                        {getSelectionStatusBadge(selectedRegistration.selection_status)}
+                        {selectedRegistration.selection_notes && (
+                          <div className="mt-2">
+                            <small className="text-muted">
+                              Catatan: {selectedRegistration.selection_notes}
                             </small>
                           </div>
                         )}
                       </div>
-                    )}
-                  </div>
-                  <div className="col-md-3 text-center">
-                    <h6>Seleksi Diklat</h6>
-                    {getSelectionStatusBadge(
-                      selectedRegistration.selection_status
-                    )}
-                    {selectedRegistration.selection_notes && (
-                      <div className="mt-2">
-                        <small className="text-muted">
-                          Catatan: {selectedRegistration.selection_notes}
-                        </small>
+                      <div className="col-md-3 text-center">
+                        <h6>Penyaluran Kerja</h6>
+                        {getPlacementStatusBadge(selectedRegistration.placement_status)}
+                        {selectedRegistration.company_name && (
+                          <div className="mt-2">
+                            <small className="text-muted">
+                              Perusahaan: {selectedRegistration.company_name}
+                            </small>
+                          </div>
+                        )}
+                        {selectedRegistration.placement_notes && (
+                          <div className="mt-1">
+                            <small className="text-muted">
+                              Catatan: {selectedRegistration.placement_notes}
+                            </small>
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                  <div className="col-md-3 text-center">
-                    <h6>Penyaluran Kerja</h6>
-                    {getPlacementStatusBadge(
-                      selectedRegistration.placement_status
-                    )}
-                    {selectedRegistration.company_name && (
-                      <div className="mt-2">
-                        <small className="text-muted">
-                          Perusahaan: {selectedRegistration.company_name}
-                        </small>
-                      </div>
-                    )}
-                    {selectedRegistration.placement_notes && (
-                      <div className="mt-1">
-                        <small className="text-muted">
-                          Catatan: {selectedRegistration.placement_notes}
-                        </small>
-                      </div>
-                    )}
-                  </div>
-                </div>
+                    </div>
 
-                {/* Dokumen Sertifikat */}
-                <div className="row mt-4">
-                  <div className="col-12">
-                    <h6 className="fw-bold text-primary">Dokumen Sertifikat</h6>
-                    <div className="d-flex gap-3">
-                      {selectedRegistration.n4_certificate_path ? (
-                        <a
-                          href={`http://localhost:5000${selectedRegistration.n4_certificate_path}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="btn btn-outline-primary btn-sm"
-                        >
-                          <i className="bi bi-file-earmark-pdf me-1"></i>
-                          Sertifikat N4
-                        </a>
-                      ) : (
-                        <span className="text-muted">Tidak ada sertifikat N4</span>
-                      )}
-
-                      {selectedRegistration.ssw_certificate_path ? (
-                        <a
-                          href={`http://localhost:5000${selectedRegistration.ssw_certificate_path}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="btn btn-outline-primary btn-sm"
-                        >
-                          <i className="bi bi-file-earmark-pdf me-1"></i>
-                          Sertifikat SSW
-                        </a>
-                      ) : (
-                        <span className="text-muted">Tidak ada sertifikat SSW</span>
-                      )}
+                    {/* Dokumen */}
+                    <div className="row">
+                      <div className="col-12">
+                        <h6 className="fw-bold text-primary mb-3">Dokumen & Sertifikat</h6>
+                        <div className="row">
+                          <div className="col-md-4">
+                            <div className="card">
+                              <div className="card-body text-center">
+                                <i className="bi bi-person-badge fs-1 text-primary mb-2"></i>
+                                <h6>Foto Profil</h6>
+                                {selectedRegistration.photo_path ? (
+                                  <a
+                                    href={`http://localhost:5000${selectedRegistration.photo_path}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="btn btn-outline-primary btn-sm mt-2"
+                                  >
+                                    Lihat Foto
+                                  </a>
+                                ) : (
+                                  <span className="text-muted">Tidak tersedia</span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="col-md-4">
+                            <div className="card">
+                              <div className="card-body text-center">
+                                <i className="bi bi-file-earmark-pdf fs-1 text-danger mb-2"></i>
+                                <h6>Sertifikat N4</h6>
+                                {selectedRegistration.n4_certificate_path ? (
+                                  <a
+                                    href={`http://localhost:5000${selectedRegistration.n4_certificate_path}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="btn btn-outline-danger btn-sm mt-2"
+                                  >
+                                    Lihat Sertifikat
+                                  </a>
+                                ) : (
+                                  <span className="text-muted">Tidak tersedia</span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="col-md-4">
+                            <div className="card">
+                              <div className="card-body text-center">
+                                <i className="bi bi-file-earmark-pdf fs-1 text-danger mb-2"></i>
+                                <h6>Sertifikat SSW</h6>
+                                {selectedRegistration.ssw_certificate_path ? (
+                                  <a
+                                    href={`http://localhost:5000${selectedRegistration.ssw_certificate_path}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="btn btn-outline-danger btn-sm mt-2"
+                                  >
+                                    Lihat Sertifikat
+                                  </a>
+                                ) : (
+                                  <span className="text-muted">Tidak tersedia</span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -942,6 +1130,13 @@ const AdminDashboard = () => {
                   onClick={handleCloseModal}
                 >
                   Tutup
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => handleUpdateRegistrationStatus(selectedRegistration)}
+                >
+                  Update Status
                 </button>
               </div>
             </div>

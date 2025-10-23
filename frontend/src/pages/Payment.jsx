@@ -425,18 +425,18 @@ const Payment = () => {
         const isWaitingVerification = paymentUtils.isWaitingVerification(payment);
         const currentAmount = getDisplayAmount(payment);
 
-        console.log("Payment Alert Analysis:", {
-          invoice: payment.invoice_number,
-          status: payment.status,
-          currentInstallment: currentInfo.number,
-          isCurrentPaid: currentInfo.isPaid,
-          isWaitingVerification: isWaitingVerification,
-          hasActiveInvoice,
-          isWaitingForInvoice,
-          hasProof: !!payment.proof_image,
-          verified: !!payment.verified_by,
-          dueDate: payment.due_date
-        });
+        // console.log("Payment Alert Analysis:", {
+        //   invoice: payment.invoice_number,
+        //   status: payment.status,
+        //   currentInstallment: currentInfo.number,
+        //   isCurrentPaid: currentInfo.isPaid,
+        //   isWaitingVerification: isWaitingVerification,
+        //   hasActiveInvoice,
+        //   isWaitingForInvoice,
+        //   hasProof: !!payment.proof_image,
+        //   verified: !!payment.verified_by,
+        //   dueDate: payment.due_date
+        // });
 
         if (hasActiveInvoice && paymentUtils.isOverdue(payment) && !isWaitingVerification) {
           alerts.push({
@@ -586,8 +586,8 @@ const Payment = () => {
         const alerts = generatePaymentAlerts(paymentsData);
         setPaymentAlerts(alerts);
 
-        console.log("Payments loaded:", paymentsData.length);
-        console.log("Alerts generated:", alerts.length);
+        // console.log("Payments loaded:", paymentsData.length);
+        // console.log("Alerts generated:", alerts.length);
       } else {
         throw new Error(
           response.data?.message || "Format response tidak valid"
@@ -1870,9 +1870,6 @@ const Payment = () => {
         <h6>
           <i className="bi bi-info-circle me-2"></i>Informasi Sistem Pembayaran
         </h6>
-        <p className="mb-2">
-          <strong>Alur Pembayaran:</strong>
-        </p>
         <ol className="mb-2">
           <li>Admin menerbitkan tagihan cicilan 1 setelah Anda dinyatakan lolos interview</li>
           <li>Anda melakukan pembayaran dan upload bukti</li>

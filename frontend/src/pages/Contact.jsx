@@ -13,6 +13,17 @@ const Contact = () => {
   const [loading, setLoading] = useState(false);
   const [submitStatus, setSubmitStatus] = useState(null);
 
+  // **PERBAIKAN: Tambahkan fungsi WhatsApp dengan pesan**
+  const handleWhatsAppClick = (customMessage = null) => {
+    const waNumber = "6281110119273";
+    const defaultMessage = "Halo Fitalenta, saya ingin bertanya tentang program magang. Bisakah Anda memberikan informasi lebih lanjut?";
+    const message = customMessage || defaultMessage;
+
+    const waUrl = `https://api.whatsapp.com/send?phone=${waNumber}&text=${encodeURIComponent(message)}`;
+
+    window.open(waUrl, '_blank', 'noopener,noreferrer');
+  };
+
   const contactInfo = [
     {
       icon: "bi-geo-alt",
@@ -30,13 +41,13 @@ const Contact = () => {
       icon: "bi-telephone",
       title: "Telepon",
       content: "+62 811 1011 9273",
-      link: "tel:+622112345678",
+      link: "tel:+6281110119273", // **PERBAIKAN: Format nomor yang benar**
     },
     {
       icon: "bi-whatsapp",
       title: "WhatsApp",
       content: "+62 811 1011 9273",
-      link: "https://wa.me/6281110119273",
+      onClick: () => handleWhatsAppClick(),
     },
     {
       icon: "bi-envelope",
@@ -44,7 +55,6 @@ const Contact = () => {
       content: "info@fitalenta.co.id",
       link: "mailto:info@fitalenta.co.id",
     },
-    
   ];
 
   const socialMedia = [
@@ -194,6 +204,20 @@ const Contact = () => {
                                   </span>
                                 ))}
                               </a>
+                            ) : info.onClick ? (
+                              // **PERBAIKAN: Gunakan button untuk WhatsApp dengan onClick**
+                              <button
+                                onClick={info.onClick}
+                                className="card-text text-muted text-decoration-none border-0 bg-transparent p-0 text-start"
+                                style={{ cursor: "pointer" }}
+                              >
+                                {info.content.split("\n").map((line, i) => (
+                                  <span key={i}>
+                                    {line}
+                                    <br />
+                                  </span>
+                                ))}
+                              </button>
                             ) : (
                               <p className="card-text text-muted mb-0">
                                 {info.content.split("\n").map((line, i) => (
@@ -379,13 +403,13 @@ const Contact = () => {
                 siap membantu 24/7.
               </p>
               <div className="d-flex gap-3 justify-content-center flex-wrap">
-                <a
-                  href="https://wa.me/6281110119273"
-                  className="btn btn-success btn-lg"
+                <button
+                  onClick={() => handleWhatsAppClick("Halo Fitalenta, saya masih ada pertanyaan tentang program magang. Bisakah Anda membantu?")}
+                  className="btn btn-success btn-lg d-inline-flex align-items-center"
                 >
                   <i className="bi bi-whatsapp me-2"></i>
                   Chat WhatsApp
-                </a>
+                </button>
               </div>
             </div>
           </div>

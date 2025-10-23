@@ -8,6 +8,15 @@ const helpers = {
     }).format(amount);
   },
 
+  formatDateForBirthDate: (date) => {
+    if (!date) return "-";
+    return new Intl.DateTimeFormat("id-ID", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    }).format(new Date(date));
+  },
+
   formatDate: (date) => {
     if (!date) return "-";
     return new Intl.DateTimeFormat("id-ID", {
