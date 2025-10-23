@@ -22,7 +22,7 @@ cd OJT
 ```
 
 ### Langkah 2: Setup Database
-Jalankan perintah berikut di terminal:
+Jalankan perintah berikut di terminal (root proyek):
 ```bash
 npm run db:setup
 npm run db:seed
@@ -35,7 +35,7 @@ Atau:
 **Catatan**: jka menggunakan perintah terminal dan versi mysql nya terbaru harap ganti nama dari ../../database/schema.sql ke ../../database/schema2.sql di file backend/scripts/setupDatabase.js
 
 ### Langkah 3: Setup Backend dan Frontend
-jalankan perintah berikut setelah masuk ke direktori OJT:
+jalankan perintah berikut di terminal (root proyek):
 1. Install dependencies:
 ```bash
 npm run install:all
