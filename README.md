@@ -40,7 +40,8 @@ jalankan perintah berikut di terminal (root proyek):
 ```bash
 npm run install:all
 ```
-2. Jalankan server:
+2. rename file .env.example ke .env yang ada di folder backend, lalu sesuaikan isi kodenya.
+3. Jalankan server:
 ```bash
 npm run dev
 ```
