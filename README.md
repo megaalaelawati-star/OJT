@@ -24,7 +24,7 @@ cd OJT
 ### Langkah 2: Setup Database
 **Catatan**: jka menggunakan perintah terminal dan versi mysql nya terbaru harap ganti nama dari ../../database/schema.sql ke ../../database/schema2.sql di file backend/scripts/setupDatabase.js
 
-Jalankan perintah berikut di terminal:
+Jalankan perintah berikut di terminal (root proyek):
 ```bash
 npm run db:setup
 npm run db:seed
